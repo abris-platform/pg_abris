@@ -1,0 +1,5 @@
+# pgabris extension
+comment = 'Abris metadata'
+default_version = '0.0.1'
+requires = 'uuid-ossp'
+relocatable = true

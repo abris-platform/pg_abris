@@ -1,0 +1,3 @@
+CREATE EXTENSION pgabris CASCADE;
+NOTICE:  installing required extension "uuid-ossp"
+ERROR:  relation "entity_extra" does not exist
