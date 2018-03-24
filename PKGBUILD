@@ -1,4 +1,4 @@
-pkgname=pgdms
+pkgname=pgabris
 pkgver=0.0.1
 pkgrel=1
 pkgdesc="Abris metadata"

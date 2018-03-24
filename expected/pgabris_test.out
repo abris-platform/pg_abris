@@ -1,3 +1,870 @@
 CREATE EXTENSION pgabris CASCADE;
 NOTICE:  installing required extension "uuid-ossp"
-ERROR:  relation "entity_extra" does not exist
+SELECT title,
+    primarykey,
+    ems_en ,
+    entity ,
+    base_entity 
+ FROM meta.entity
+ ORDER BY entity;
+           title            |        primarykey        | ems_en |             entity              |          base_entity           
+----------------------------+--------------------------+--------+---------------------------------+--------------------------------
+ base_entity                |                          |      0 | meta.base_entity                | 
+ base_table                 |                          |      0 | meta.base_table                 | 
+ columns                    |                          |      0 | meta.columns                    | 
+ constraint_column_usage    |                          |      0 | meta.constraint_column_usage    | 
+ constraint_column_usage_ex |                          |      0 | meta.constraint_column_usage_ex | 
+ entity                     | entity                   |      0 | meta.entity                     | meta.entity_extra
+ entity_extra               | entity                   |      0 | meta.entity_extra               | meta.entity_extra
+ entity_type                |                          |      0 | meta.entity_type                | 
+ functions                  |                          |      0 | meta.functions                  | 
+ menu                       | name                     |      0 | meta.menu                       | meta.menu_item
+ menu_item                  | name                     |      0 | meta.menu_item                  | meta.menu_item
+ page                       | page_key                 |      0 | meta.page                       | meta.page
+ page_block                 | block_key                |      0 | meta.page_block                 | meta.page_block
+ page_block_layout          |                          |      0 | meta.page_block_layout          | 
+ pivot                      | entity                   |      0 | meta.pivot                      | meta.pivot
+ projection_buttons         | button                   |      0 | meta.projection_buttons         | meta.projection_buttons
+ projection_entity          | projection_name          |      0 | meta.projection_entity          | meta.projection_entity_extra
+ projection_entity_extra    | projection_name          |      0 | meta.projection_entity_extra    | meta.projection_entity_extra
+ projection_property        | projection_name          |      0 | meta.projection_property        | meta.projection_property_extra
+ projection_property_extra  | projection_name          |      0 | meta.projection_property_extra  | meta.projection_property_extra
+ projection_redirect        | projection_redirect      |      0 | meta.projection_redirect        | meta.projection_redirect
+ projection_relation        | projection_relation_name |      0 | meta.projection_relation        | meta.projection_relation_extra
+ projection_relation_ex     | projection_relation_name |      0 | meta.projection_relation_ex     | meta.projection_relation_extra
+ projection_relation_extra  | projection_relation_name |      0 | meta.projection_relation_extra  | meta.projection_relation_extra
+ property                   | entity                   |      0 | meta.property                   | meta.pivot
+ property_add               |                          |      0 | meta.property_add               | 
+ property_extra             | column_name              |      0 | meta.property_extra             | meta.property_extra
+ property_type              |                          |      0 | meta.property_type              | 
+ reference                  |                          |      0 | meta.reference                  | 
+ relation                   | relation_name            |      0 | meta.relation                   | meta.relation_add
+ relation_add               | relation_name            |      0 | meta.relation_add               | meta.relation_add
+ relation_extra             | relation_name            |      0 | meta.relation_extra             | meta.relation_extra
+ schema                     |                          |      0 | meta.schema                     | 
+ table_constraints          |                          |      0 | meta.table_constraints          | 
+ table_relation             |                          |      0 | meta.table_relation             | 
+ tables                     |                          |      0 | meta.tables                     | 
+ user_list                  |                          |      0 | meta.user_list                  | 
+ view_entity                |                          |      0 | meta.view_entity                | 
+ view_page                  | page_key                 |      0 | meta.view_page                  | meta.page
+ view_page_block            | block_key                |      0 | meta.view_page_block            | meta.page_block
+ view_projection_buttons    | button                   |      0 | meta.view_projection_buttons    | meta.projection_buttons
+ view_projection_entity     |                          |      0 | meta.view_projection_entity     | 
+ view_projection_property   |                          |      0 | meta.view_projection_property   | 
+ view_projection_relation   |                          |      0 | meta.view_projection_relation   | 
+(44 rows)
+
+ 
+ SELECT * FROM meta.projection_entity;
+      projection_name       |             entity              |           title            |           jump            |        primarykey        | additional | readonly | amount_dup |          base_entity           | hint | ems_en 
+----------------------------+---------------------------------+----------------------------+---------------------------+--------------------------+------------+----------+------------+--------------------------------+------+--------
+ user_list                  | meta.user_list                  | user_list                  |                           |                          |            | f        |          0 |                                |      |      0
+ projection_buttons         | meta.projection_buttons         | projection_buttons         | projection_buttons        | button                   |            | f        |          0 | meta.projection_buttons        |      |      0
+ property                   | meta.property                   | property                   | pivot                     | entity                   |            | f        |          0 | meta.pivot                     |      |      0
+ schema                     | meta.schema                     | schema                     |                           |                          |            | f        |          0 |                                |      |      0
+ entity_extra               | meta.entity_extra               | entity_extra               | entity_extra              | entity                   |            | f        |          0 | meta.entity_extra              |      |      0
+ projection_entity          | meta.projection_entity          | projection_entity          | projection_entity_extra   | projection_name          |            | f        |          0 | meta.projection_entity_extra   |      |      0
+ entity_type                | meta.entity_type                | entity_type                |                           |                          |            | f        |          0 |                                |      |      0
+ projection_entity_extra    | meta.projection_entity_extra    | projection_entity_extra    | projection_entity_extra   | projection_name          |            | f        |          0 | meta.projection_entity_extra   |      |      0
+ base_entity                | meta.base_entity                | base_entity                |                           |                          |            | f        |          0 |                                |      |      0
+ projection_relation_ex     | meta.projection_relation_ex     | projection_relation_ex     | projection_relation_extra | projection_relation_name |            | f        |          0 | meta.projection_relation_extra |      |      0
+ property_type              | meta.property_type              | property_type              |                           |                          |            | f        |          0 |                                |      |      0
+ page_block_layout          | meta.page_block_layout          | page_block_layout          |                           |                          |            | f        |          0 |                                |      |      0
+ relation_extra             | meta.relation_extra             | relation_extra             | relation_extra            | relation_name            |            | f        |          0 | meta.relation_extra            |      |      0
+ view_page                  | meta.view_page                  | view_page                  | page                      | page_key                 |            | f        |          0 | meta.page                      |      |      0
+ projection_relation        | meta.projection_relation        | projection_relation        | projection_relation_extra | projection_relation_name |            | f        |          0 | meta.projection_relation_extra |      |      0
+ table_relation             | meta.table_relation             | table_relation             |                           |                          |            | f        |          0 |                                |      |      0
+ tables                     | meta.tables                     | tables                     |                           |                          |            | f        |          0 |                                |      |      0
+ projection_redirect        | meta.projection_redirect        | projection_redirect        | projection_redirect       | projection_redirect      |            | f        |          0 | meta.projection_redirect       |      |      0
+ projection_relation_extra  | meta.projection_relation_extra  | projection_relation_extra  | projection_relation_extra | projection_relation_name |            | f        |          0 | meta.projection_relation_extra |      |      0
+ property_extra             | meta.property_extra             | property_extra             | property_extra            | column_name              |            | f        |          0 | meta.property_extra            |      |      0
+ table_constraints          | meta.table_constraints          | table_constraints          |                           |                          |            | f        |          0 |                                |      |      0
+ entity                     | meta.entity                     | entity                     | entity_extra              | entity                   |            | f        |          0 | meta.entity_extra              |      |      0
+ view_projection_relation   | meta.view_projection_relation   | view_projection_relation   |                           |                          |            | f        |          0 |                                |      |      0
+ constraint_column_usage_ex | meta.constraint_column_usage_ex | constraint_column_usage_ex |                           |                          |            | f        |          0 |                                |      |      0
+ page_block                 | meta.page_block                 | page_block                 | page_block                | block_key                |            | f        |          0 | meta.page_block                |      |      0
+ view_entity                | meta.view_entity                | view_entity                |                           |                          |            | f        |          0 |                                |      |      0
+ reference                  | meta.reference                  | reference                  |                           |                          |            | f        |          0 |                                |      |      0
+ view_page_block            | meta.view_page_block            | view_page_block            | page_block                | block_key                |            | f        |          0 | meta.page_block                |      |      0
+ view_projection_property   | meta.view_projection_property   | view_projection_property   |                           |                          |            | f        |          0 |                                |      |      0
+ columns                    | meta.columns                    | columns                    |                           |                          |            | f        |          0 |                                |      |      0
+ menu_item                  | meta.menu_item                  | menu_item                  | menu_item                 | name                     |            | f        |          0 | meta.menu_item                 |      |      0
+ relation_add               | meta.relation_add               | relation_add               | relation_add              | relation_name            |            | f        |          0 | meta.relation_add              |      |      0
+ view_projection_entity     | meta.view_projection_entity     | view_projection_entity     |                           |                          |            | f        |          0 |                                |      |      0
+ page                       | meta.page                       | page                       | page                      | page_key                 |            | f        |          0 | meta.page                      |      |      0
+ relation                   | meta.relation                   | relation                   | relation_add              | relation_name            |            | f        |          0 | meta.relation_add              |      |      0
+ property_add               | meta.property_add               | property_add               |                           |                          |            | f        |          0 |                                |      |      0
+ constraint_column_usage    | meta.constraint_column_usage    | constraint_column_usage    |                           |                          |            | f        |          0 |                                |      |      0
+ projection_property        | meta.projection_property        | projection_property        | projection_property_extra | projection_name          |            | f        |          0 | meta.projection_property_extra |      |      0
+ view_projection_buttons    | meta.view_projection_buttons    | view_projection_buttons    | projection_buttons        | button                   |            | f        |          0 | meta.projection_buttons        |      |      0
+ menu                       | meta.menu                       | menu                       | menu_item                 | name                     |            | f        |          0 | meta.menu_item                 |      |      0
+ base_table                 | meta.base_table                 | base_table                 |                           |                          |            | f        |          0 |                                |      |      0
+ pivot                      | meta.pivot                      | pivot                      | pivot                     | entity                   |            | f        |          0 | meta.pivot                     |      |      0
+ functions                  | meta.functions                  | functions                  |                           |                          |            | f        |          0 |                                |      |      0
+ projection_property_extra  | meta.projection_property_extra  | projection_property_extra  | projection_property_extra | projection_name          |            | f        |          0 | meta.projection_property_extra |      |      0
+(44 rows)
+
+ SELECT * FROM meta.relation;
+ relation_name | relation_entity | entity | title | key | order | ems_en | hint 
+---------------+-----------------+--------+-------+-----+-------+--------+------
+(0 rows)
+
+ 
+ SELECT * FROM meta.projection_relation;
+ projection_relation_name | title | related_projection_name | readonly | visible |      projection_name       | relation_entity | entity | key | opened | order | view_id | hint 
+--------------------------+-------+-------------------------+----------+---------+----------------------------+-----------------+--------+-----+--------+-------+---------+------
+                          |       |                         | f        | t       | projection_entity          |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | projection_relation        |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | property_extra             |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | view_projection_entity     |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | page_block_layout          |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | projection_property_extra  |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | reference                  |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | table_constraints          |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | projection_relation_ex     |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | view_page_block            |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | pivot                      |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | view_entity                |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | projection_property        |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | property                   |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | projection_relation_extra  |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | view_projection_property   |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | menu                       |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | user_list                  |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | projection_buttons         |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | columns                    |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | entity_type                |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | entity_extra               |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | view_projection_buttons    |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | entity                     |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | page_block                 |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | constraint_column_usage_ex |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | projection_entity_extra    |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | relation_add               |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | page                       |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | relation_extra             |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | tables                     |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | table_relation             |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | view_projection_relation   |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | property_add               |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | constraint_column_usage    |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | projection_redirect        |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | view_page                  |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | schema                     |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | functions                  |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | relation                   |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | base_entity                |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | base_table                 |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | menu_item                  |                 |        |     | f      |       |         | 
+                          |       |                         | f        | t       | property_type              |                 |        |     | f      |       |         | 
+(44 rows)
+
+ 
+ SELECT * FROM meta.tables;
+   table_catalog    |             entity              | table_type | self_referencing_column_name | reference_generation | user_defined_type_catalog | user_defined_type_schema | user_defined_type_name | is_insertable_into | is_typed | commit_action 
+--------------------+---------------------------------+------------+------------------------------+----------------------+---------------------------+--------------------------+------------------------+--------------------+----------+---------------
+ contrib_regression | meta.entity_extra               | BASE TABLE |                              |                      |                           |                          |                        | YES                | NO       | 
+ contrib_regression | meta.relation_add               | BASE TABLE |                              |                      |                           |                          |                        | YES                | NO       | 
+ contrib_regression | meta.relation_extra             | BASE TABLE |                              |                      |                           |                          |                        | YES                | NO       | 
+ contrib_regression | meta.projection_entity_extra    | BASE TABLE |                              |                      |                           |                          |                        | YES                | NO       | 
+ contrib_regression | meta.projection_relation_extra  | BASE TABLE |                              |                      |                           |                          |                        | YES                | NO       | 
+ contrib_regression | meta.page                       | BASE TABLE |                              |                      |                           |                          |                        | YES                | NO       | 
+ contrib_regression | meta.page_block                 | BASE TABLE |                              |                      |                           |                          |                        | YES                | NO       | 
+ contrib_regression | meta.pivot                      | BASE TABLE |                              |                      |                           |                          |                        | YES                | NO       | 
+ contrib_regression | meta.projection_buttons         | BASE TABLE |                              |                      |                           |                          |                        | YES                | NO       | 
+ contrib_regression | meta.projection_property_extra  | BASE TABLE |                              |                      |                           |                          |                        | YES                | NO       | 
+ contrib_regression | meta.property_extra             | BASE TABLE |                              |                      |                           |                          |                        | YES                | NO       | 
+ contrib_regression | meta.tables                     | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.base_entity                | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.base_table                 | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.columns                    | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.constraint_column_usage    | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.constraint_column_usage_ex | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.entity_type                | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.menu                       | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.page_block_layout          | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.property_add               | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.projection_relation_ex     | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.property_type              | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.table_constraints          | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.reference                  | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.schema                     | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.table_relation             | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.user_list                  | VIEW       |                              |                      |                           |                          |                        | YES                | NO       | 
+ contrib_regression | meta.view_entity                | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.view_page                  | VIEW       |                              |                      |                           |                          |                        | YES                | NO       | 
+ contrib_regression | meta.view_page_block            | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.view_projection_buttons    | VIEW       |                              |                      |                           |                          |                        | YES                | NO       | 
+ contrib_regression | meta.view_projection_entity     | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.view_projection_property   | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.view_projection_relation   | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.entity                     | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.functions                  | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.menu_item                  | BASE TABLE |                              |                      |                           |                          |                        | YES                | NO       | 
+ contrib_regression | meta.projection_entity          | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.projection_property        | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.projection_redirect        | BASE TABLE |                              |                      |                           |                          |                        | YES                | NO       | 
+ contrib_regression | meta.projection_relation        | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.property                   | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+ contrib_regression | meta.relation                   | VIEW       |                              |                      |                           |                          |                        | NO                 | NO       | 
+(44 rows)
+
+ 
+SELECT * FROM  meta.base_entity;
+                        entity                        |                 base_entity                  |        primarykey        
+------------------------------------------------------+----------------------------------------------+--------------------------
+ information_schema._pg_user_mappings                 | information_schema._pg_foreign_servers       | 
+ information_schema.administrable_role_authorizations | information_schema.applicable_roles          | 
+ information_schema.column_options                    | information_schema._pg_foreign_table_columns | 
+ information_schema.data_type_privileges              | information_schema.attributes                | 
+ information_schema.data_type_privileges              | information_schema.columns                   | 
+ information_schema.data_type_privileges              | information_schema.domains                   | 
+ information_schema.data_type_privileges              | information_schema.parameters                | 
+ information_schema.data_type_privileges              | information_schema.routines                  | 
+ information_schema.element_types                     | information_schema.data_type_privileges      | 
+ information_schema.foreign_data_wrapper_options      | information_schema._pg_foreign_data_wrappers | 
+ information_schema.foreign_data_wrappers             | information_schema._pg_foreign_data_wrappers | 
+ information_schema.foreign_server_options            | information_schema._pg_foreign_servers       | 
+ information_schema.foreign_servers                   | information_schema._pg_foreign_servers       | 
+ information_schema.foreign_table_options             | information_schema._pg_foreign_tables        | 
+ information_schema.foreign_tables                    | information_schema._pg_foreign_tables        | 
+ information_schema.role_column_grants                | information_schema.column_privileges         | 
+ information_schema.role_column_grants                | information_schema.enabled_roles             | 
+ information_schema.role_routine_grants               | information_schema.enabled_roles             | 
+ information_schema.role_routine_grants               | information_schema.routine_privileges        | 
+ information_schema.role_table_grants                 | information_schema.enabled_roles             | 
+ information_schema.role_table_grants                 | information_schema.table_privileges          | 
+ information_schema.role_udt_grants                   | information_schema.enabled_roles             | 
+ information_schema.role_udt_grants                   | information_schema.udt_privileges            | 
+ information_schema.role_usage_grants                 | information_schema.enabled_roles             | 
+ information_schema.role_usage_grants                 | information_schema.usage_privileges          | 
+ information_schema.user_mapping_options              | information_schema._pg_user_mappings         | 
+ information_schema.user_mappings                     | information_schema._pg_user_mappings         | 
+ meta.base_entity                                     | information_schema.view_table_usage          | 
+ meta.base_entity                                     | meta.entity                                  | entity
+ meta.base_entity                                     | meta.tables                                  | 
+ meta.base_table                                      | meta.entity                                  | entity
+ meta.columns                                         | information_schema.columns                   | 
+ meta.entity                                          | meta.entity_extra                            | entity
+ meta.entity_extra                                    | meta.entity_extra                            | entity
+ meta.menu                                            | meta.menu_item                               | name
+ meta.menu                                            | meta.projection_entity                       | projection_name
+ meta.menu_item                                       | meta.menu_item                               | name
+ meta.page                                            | meta.page                                    | page_key
+ meta.page_block                                      | meta.page_block                              | block_key
+ meta.pivot                                           | meta.pivot                                   | entity
+ meta.projection_buttons                              | meta.projection_buttons                      | button
+ meta.projection_entity                               | meta.entity                                  | entity
+ meta.projection_entity                               | meta.projection_entity_extra                 | projection_name
+ meta.projection_entity_extra                         | meta.projection_entity_extra                 | projection_name
+ meta.projection_property                             | meta.projection_entity                       | projection_name
+ meta.projection_property                             | meta.projection_property_extra               | projection_name
+ meta.projection_property                             | meta.property_add                            | 
+ meta.projection_property_extra                       | meta.projection_property_extra               | projection_name
+ meta.projection_redirect                             | meta.projection_redirect                     | projection_redirect
+ meta.projection_relation                             | meta.projection_entity                       | projection_name
+ meta.projection_relation                             | meta.projection_relation_extra               | projection_relation_name
+ meta.projection_relation                             | meta.relation                                | relation_name
+ meta.projection_relation_ex                          | meta.entity                                  | entity
+ meta.projection_relation_ex                          | meta.projection_entity                       | projection_name
+ meta.projection_relation_ex                          | meta.projection_relation_extra               | projection_relation_name
+ meta.projection_relation_ex                          | meta.relation                                | relation_name
+ meta.projection_relation_extra                       | meta.projection_relation_extra               | projection_relation_name
+ meta.property                                        | meta.pivot                                   | entity
+ meta.property                                        | meta.property_extra                          | column_name
+ meta.property_add                                    | meta.entity                                  | entity
+ meta.property_add                                    | meta.property                                | entity
+ meta.property_extra                                  | meta.property_extra                          | column_name
+ meta.reference                                       | information_schema.key_column_usage          | 
+ meta.reference                                       | meta.constraint_column_usage_ex              | 
+ meta.reference                                       | meta.table_constraints                       | 
+ meta.relation                                        | meta.relation_add                            | relation_name
+ meta.relation                                        | meta.relation_extra                          | relation_name
+ meta.relation_add                                    | meta.relation_add                            | relation_name
+ meta.relation_extra                                  | meta.relation_extra                          | relation_name
+ meta.schema                                          | information_schema.schemata                  | 
+ meta.table_relation                                  | information_schema.key_column_usage          | 
+ meta.table_relation                                  | meta.constraint_column_usage                 | 
+ meta.table_relation                                  | meta.constraint_column_usage_ex              | 
+ meta.table_relation                                  | meta.entity                                  | entity
+ meta.table_relation                                  | meta.entity_extra                            | entity
+ meta.table_relation                                  | meta.table_constraints                       | 
+ meta.tables                                          | information_schema.tables                    | 
+ meta.view_entity                                     | meta.entity                                  | entity
+ meta.view_page                                       | meta.page                                    | page_key
+ meta.view_page_block                                 | meta.page_block                              | block_key
+ meta.view_projection_buttons                         | meta.projection_buttons                      | button
+ meta.view_projection_entity                          | meta.projection_entity                       | projection_name
+ meta.view_projection_property                        | meta.projection_property                     | projection_name
+ meta.view_projection_relation                        | meta.projection_relation                     | projection_relation_name
+ pg_catalog.pg_stat_sys_indexes                       | pg_catalog.pg_stat_all_indexes               | 
+ pg_catalog.pg_stat_sys_tables                        | pg_catalog.pg_stat_all_tables                | 
+ pg_catalog.pg_stat_user_indexes                      | pg_catalog.pg_stat_all_indexes               | 
+ pg_catalog.pg_stat_user_tables                       | pg_catalog.pg_stat_all_tables                | 
+ pg_catalog.pg_stat_xact_sys_tables                   | pg_catalog.pg_stat_xact_all_tables           | 
+ pg_catalog.pg_stat_xact_user_tables                  | pg_catalog.pg_stat_xact_all_tables           | 
+ pg_catalog.pg_statio_sys_indexes                     | pg_catalog.pg_statio_all_indexes             | 
+ pg_catalog.pg_statio_sys_sequences                   | pg_catalog.pg_statio_all_sequences           | 
+ pg_catalog.pg_statio_sys_tables                      | pg_catalog.pg_statio_all_tables              | 
+ pg_catalog.pg_statio_user_indexes                    | pg_catalog.pg_statio_all_indexes             | 
+ pg_catalog.pg_statio_user_sequences                  | pg_catalog.pg_statio_all_sequences           | 
+ pg_catalog.pg_statio_user_tables                     | pg_catalog.pg_statio_all_tables              | 
+ pg_catalog.pg_user                                   | pg_catalog.pg_shadow                         | 
+(97 rows)
+
+ 
+SELECT * FROM  meta.base_table;
+ entity | title 
+--------+-------
+(0 rows)
+
+ 
+SELECT * FROM  meta.columns;
+ table_catalog | table_schema | table_name | entity | column_name | ordinal_position | column_default | is_nullable | data_type | character_maximum_length | character_octet_length | numeric_precision | numeric_precision_radix | numeric_scale | datetime_precision | interval_type | interval_precision | character_set_catalog | character_set_schema | character_set_name | collation_catalog | collation_schema | collation_name | domain_catalog | domain_schema | domain_name | udt_catalog | udt_schema | udt_name | scope_catalog | scope_schema | scope_name | maximum_cardinality | dtd_identifier | is_self_referencing | is_identity | identity_generation | identity_start | identity_increment | identity_maximum | identity_minimum | identity_cycle | is_generated | generation_expression | is_updatable 
+---------------+--------------+------------+--------+-------------+------------------+----------------+-------------+-----------+--------------------------+------------------------+-------------------+-------------------------+---------------+--------------------+---------------+--------------------+-----------------------+----------------------+--------------------+-------------------+------------------+----------------+----------------+---------------+-------------+-------------+------------+----------+---------------+--------------+------------+---------------------+----------------+---------------------+-------------+---------------------+----------------+--------------------+------------------+------------------+----------------+--------------+-----------------------+--------------
+(0 rows)
+
+ 
+SELECT * FROM  meta.constraint_column_usage;
+   table_catalog    | table_schema |        table_name         |       column_name        | constraint_catalog | constraint_schema |        constraint_name         
+--------------------+--------------+---------------------------+--------------------------+--------------------+-------------------+--------------------------------
+ contrib_regression | meta         | entity_extra              | entity                   | contrib_regression | meta              | entity_extra_pkey
+ contrib_regression | meta         | relation_add              | relation_name            | contrib_regression | meta              | relation_add_pkey
+ contrib_regression | meta         | relation_extra            | relation_name            | contrib_regression | meta              | relation_extra_pkey
+ contrib_regression | meta         | projection_entity_extra   | projection_name          | contrib_regression | meta              | projection_entity_extra_pkey
+ contrib_regression | meta         | projection_entity_extra   | entity                   | contrib_regression | meta              | projection_entity_extra_pkey
+ contrib_regression | meta         | projection_relation_extra | projection_relation_name | contrib_regression | meta              | projection_relation_extra_pkey
+ contrib_regression | meta         | menu_item                 | name                     | contrib_regression | meta              | menu_item_pkey
+ contrib_regression | meta         | page                      | page_key                 | contrib_regression | meta              | page_pkey
+ contrib_regression | meta         | page_block                | block_key                | contrib_regression | meta              | page_block_pkey
+ contrib_regression | meta         | pivot                     | entity                   | contrib_regression | meta              | pivot_pkey
+ contrib_regression | meta         | projection_buttons        | button                   | contrib_regression | meta              | projection_buttons_pkey
+ contrib_regression | meta         | projection_buttons        | projection_name          | contrib_regression | meta              | projection_buttons_pkey
+ contrib_regression | meta         | projection_property_extra | column_name              | contrib_regression | meta              | projection_property_extra_pkey
+ contrib_regression | meta         | projection_property_extra | projection_name          | contrib_regression | meta              | projection_property_extra_pkey
+ contrib_regression | meta         | property_extra            | column_name              | contrib_regression | meta              | property_extra_pkey
+ contrib_regression | meta         | property_extra            | entity                   | contrib_regression | meta              | property_extra_pkey
+ contrib_regression | meta         | projection_redirect       | projection_redirect      | contrib_regression | meta              | projection_redirect_pkey
+(17 rows)
+
+ 
+SELECT * FROM  meta.constraint_column_usage_ex;
+   table_catalog    | table_schema |        table_name         | constraint_table_schema |   constraint_table_name   |       column_name        | constraint_catalog | constraint_schema |        constraint_name         
+--------------------+--------------+---------------------------+-------------------------+---------------------------+--------------------------+--------------------+-------------------+--------------------------------
+ contrib_regression | meta         | entity_extra              | meta                    | entity_extra              | entity                   | contrib_regression | meta              | entity_extra_pkey
+ contrib_regression | meta         | menu_item                 | meta                    | menu_item                 | name                     | contrib_regression | meta              | menu_item_pkey
+ contrib_regression | meta         | page_block                | meta                    | page_block                | block_key                | contrib_regression | meta              | page_block_pkey
+ contrib_regression | meta         | page                      | meta                    | page                      | page_key                 | contrib_regression | meta              | page_pkey
+ contrib_regression | meta         | pivot                     | meta                    | pivot                     | entity                   | contrib_regression | meta              | pivot_pkey
+ contrib_regression | meta         | projection_buttons        | meta                    | projection_buttons        | button                   | contrib_regression | meta              | projection_buttons_pkey
+ contrib_regression | meta         | projection_buttons        | meta                    | projection_buttons        | projection_name          | contrib_regression | meta              | projection_buttons_pkey
+ contrib_regression | meta         | projection_entity_extra   | meta                    | projection_entity_extra   | projection_name          | contrib_regression | meta              | projection_entity_extra_pkey
+ contrib_regression | meta         | projection_entity_extra   | meta                    | projection_entity_extra   | entity                   | contrib_regression | meta              | projection_entity_extra_pkey
+ contrib_regression | meta         | projection_property_extra | meta                    | projection_property_extra | column_name              | contrib_regression | meta              | projection_property_extra_pkey
+ contrib_regression | meta         | projection_property_extra | meta                    | projection_property_extra | projection_name          | contrib_regression | meta              | projection_property_extra_pkey
+ contrib_regression | meta         | projection_redirect       | meta                    | projection_redirect       | projection_redirect      | contrib_regression | meta              | projection_redirect_pkey
+ contrib_regression | meta         | projection_relation_extra | meta                    | projection_relation_extra | projection_relation_name | contrib_regression | meta              | projection_relation_extra_pkey
+ contrib_regression | meta         | property_extra            | meta                    | property_extra            | column_name              | contrib_regression | meta              | property_extra_pkey
+ contrib_regression | meta         | property_extra            | meta                    | property_extra            | entity                   | contrib_regression | meta              | property_extra_pkey
+ contrib_regression | meta         | relation_add              | meta                    | relation_add              | relation_name            | contrib_regression | meta              | relation_add_pkey
+ contrib_regression | meta         | relation_extra            | meta                    | relation_extra            | relation_name            | contrib_regression | meta              | relation_extra_pkey
+(17 rows)
+
+ 
+SELECT * FROM  meta.entity_type;
+ type |     note      
+------+---------------
+ r    | Таблица
+ v    | Представление
+(2 rows)
+
+ 
+SELECT function_name FROM  meta.functions;
+          function_name          
+---------------------------------
+ uuid_nil
+ uuid_ns_dns
+ uuid_ns_url
+ uuid_ns_oid
+ uuid_ns_x500
+ uuid_generate_v1
+ uuid_generate_v1mc
+ uuid_generate_v3
+ uuid_generate_v4
+ uuid_generate_v5
+ entity_to_table
+ entity_to_schema
+ projection_entity_insert_trgf
+ get_name_column
+ get_hint_column
+ get_order_column
+ clean
+ entity_delete_trgf
+ entity_insert_trgf
+ entity_update_trgf
+ function_delete_trgf
+ function_insert_trgf
+ function_update_trgf
+ grants_update_trgf
+ menu_item_insert_trgf
+ projection_entity_delete_trgf
+ projection_entity_update_trgf
+ projection_property_update_trgf
+ projection_redirect
+ projection_relation_update_trgf
+ property_delete_trgf
+ property_insert_trgf
+ property_update_trgf
+ relation_update_trgf
+(34 rows)
+
+ 
+SELECT * FROM  meta.menu;
+ name | parent | title | projection | view_id | role | iconclass | path | style | key 
+------+--------+-------+------------+---------+------+-----------+------+-------+-----
+(0 rows)
+
+ 
+SELECT * FROM  meta.page_block_layout;
+ layout |           name           
+--------+--------------------------
+      2 | Горизонтальная раскладка
+      1 | Вертикальная раскладка
+      0 | Нет
+(3 rows)
+
+ 
+SELECT * FROM  meta.property; 
+ property_name | entity | visible | readonly | type | title | data_type | ref_entity | column_name | ref_key | ref_filter | link_key | order | hint | constraint_name | is_nullable | default | pattern 
+---------------+--------+---------+----------+------+-------+-----------+------------+-------------+---------+------------+----------+-------+------+-----------------+-------------+---------+---------
+(0 rows)
+
+ 
+SELECT * FROM  meta.property_add;
+                                     property_name                                     |             entity             | visible | readonly |  type  |          title           |     data_type     |          ref_entity          |        column_name        |         ref_key          | ref_filter | link_key | order | virtual |   original_column_name   | hint | pattern | is_nullable | default 
+---------------------------------------------------------------------------------------+--------------------------------+---------+----------+--------+--------------------------+-------------------+------------------------------+---------------------------+--------------------------+------------+----------+-------+---------+--------------------------+------+---------+-------------+---------
+ meta.projection_relation_extra.~meta.projection_relation.~order                       | meta.projection_relation_extra | f       | t        | string | order                    | integer           | meta.projection_relation     | ~order                    | projection_relation_name |            |          |   999 | t       | order                    |      |         | f           | 
+ meta.page_block.~meta.view_page_block.~projection_name                                | meta.page_block                | f       | t        | string | projection_name          | text              | meta.view_page_block         | ~projection_name          | block_key                |            |          |   999 | t       | projection_name          |      |         | f           | 
+ meta.menu_item.~meta.menu.~iconclass                                                  | meta.menu_item                 | f       | t        | string | iconclass                | text              | meta.menu                    | ~iconclass                | name                     |            |          |   999 | t       | iconclass                |      |         | f           | 
+ meta.pivot.~meta.property.~default                                                    | meta.pivot                     | f       | t        | string | default                  | text              | meta.property                | ~default                  | entity                   |            |          |   999 | t       | default                  |      |         | f           | 
+ meta.projection_entity_extra.~meta.projection_entity.~entity                          | meta.projection_entity_extra   | f       | t        | string | entity                   | text              | meta.projection_entity       | ~entity                   | projection_name          |            |          |   999 | t       | entity                   |      |         | f           | 
+ meta.page_block.~meta.view_page_block.~entity_id                                      | meta.page_block                | f       | t        | string | entity_id                | text              | meta.view_page_block         | ~entity_id                | block_key                |            |          |   999 | t       | entity_id                |      |         | f           | 
+ meta.projection_relation_extra.~meta.projection_relation.~view_id                     | meta.projection_relation_extra | f       | t        | string | view_id                  | text              | meta.projection_relation     | ~view_id                  | projection_relation_name |            |          |   999 | t       | view_id                  |      |         | f           | 
+ meta.page_block.~meta.view_page_block.~level                                          | meta.page_block                | f       | t        | string | level                    | integer           | meta.view_page_block         | ~level                    | block_key                |            |          |   999 | t       | level                    |      |         | f           | 
+ meta.projection_entity_extra.~meta.projection_entity.~hint                            | meta.projection_entity_extra   | f       | t        | string | hint                     | text              | meta.projection_entity       | ~hint                     | projection_name          |            |          |   999 | t       | hint                     |      |         | f           | 
+ meta.projection_entity_extra.~meta.projection_entity.~projection_name                 | meta.projection_entity_extra   | f       | t        | string | projection_name          | text              | meta.projection_entity       | ~projection_name          | projection_name          |            |          |   999 | t       | projection_name          |      |         | f           | 
+ meta.menu_item.~meta.menu.~view_id                                                    | meta.menu_item                 | f       | t        | string | view_id                  | text              | meta.menu                    | ~view_id                  | name                     |            |          |   999 | t       | view_id                  |      |         | f           | 
+ meta.relation_add.~meta.relation.~order                                               | meta.relation_add              | f       | t        | string | order                    | integer           | meta.relation                | ~order                    | relation_name            |            |          |   999 | t       | order                    |      |         | f           | 
+ meta.projection_relation_extra.~meta.projection_relation.~relation_entity             | meta.projection_relation_extra | f       | t        | string | relation_entity          | text              | meta.projection_relation     | ~relation_entity          | projection_relation_name |            |          |   999 | t       | relation_entity          |      |         | f           | 
+ meta.projection_buttons.~meta.view_projection_buttons.~icon                           | meta.projection_buttons        | f       | t        | string | icon                     | text              | meta.view_projection_buttons | ~icon                     | button                   |            |          |   999 | t       | icon                     |      |         | f           | 
+ meta.menu_item.~meta.menu.~parent                                                     | meta.menu_item                 | f       | t        | string | parent                   | text              | meta.menu                    | ~parent                   | name                     |            |          |   999 | t       | parent                   |      |         | f           | 
+ meta.menu_item.~meta.menu.~title                                                      | meta.menu_item                 | f       | t        | string | title                    | text              | meta.menu                    | ~title                    | name                     |            |          |   999 | t       | title                    |      |         | f           | 
+ meta.page_block.~meta.view_page_block.~order                                          | meta.page_block                | f       | t        | string | order                    | integer           | meta.view_page_block         | ~order                    | block_key                |            |          |   999 | t       | order                    |      |         | f           | 
+ meta.projection_relation_extra.~meta.projection_relation_ex.~entity                   | meta.projection_relation_extra | f       | t        | string | entity                   | text              | meta.projection_relation_ex  | ~entity                   | projection_relation_name |            |          |   999 | t       | entity                   |      |         | f           | 
+ meta.projection_relation_extra.~meta.projection_relation_ex.~relation_entity          | meta.projection_relation_extra | f       | t        | string | relation_entity          | text              | meta.projection_relation_ex  | ~relation_entity          | projection_relation_name |            |          |   999 | t       | relation_entity          |      |         | f           | 
+ meta.projection_relation_extra.~meta.projection_relation.~related_projection_name     | meta.projection_relation_extra | f       | t        | string | related_projection_name  | text              | meta.projection_relation     | ~related_projection_name  | projection_relation_name |            |          |   999 | t       | related_projection_name  |      |         | f           | 
+ meta.page_block.~meta.view_page_block.~page_key                                       | meta.page_block                | f       | t        | string | page_key                 | text              | meta.view_page_block         | ~page_key                 | block_key                |            |          |   999 | t       | page_key                 |      |         | f           | 
+ meta.pivot.~meta.property.~entity                                                     | meta.pivot                     | f       | t        | string | entity                   | text              | meta.property                | ~entity                   | entity                   |            |          |   999 | t       | entity                   |      |         | f           | 
+ meta.projection_entity_extra.~meta.projection_entity.~jump                            | meta.projection_entity_extra   | f       | t        | string | jump                     | text              | meta.projection_entity       | ~jump                     | projection_name          |            |          |   999 | t       | jump                     |      |         | f           | 
+ meta.projection_entity_extra.~meta.projection_entity.~primarykey                      | meta.projection_entity_extra   | f       | t        | string | primarykey               | text              | meta.projection_entity       | ~primarykey               | projection_name          |            |          |   999 | t       | primarykey               |      |         | f           | 
+ meta.entity_extra.~meta.entity.~table_type                                            | meta.entity_extra              | f       | t        | string | table_type               | USER-DEFINED      | meta.entity                  | ~table_type               | entity                   |            |          |   999 | t       | table_type               |      |         | f           | 
+ meta.projection_relation_extra.~meta.projection_relation.~title                       | meta.projection_relation_extra | f       | t        | string | title                    | text              | meta.projection_relation     | ~title                    | projection_relation_name |            |          |   999 | t       | title                    |      |         | f           | 
+ meta.entity_extra.~meta.entity.~primarykey                                            | meta.entity_extra              | f       | t        | string | primarykey               | text              | meta.entity                  | ~primarykey               | entity                   |            |          |   999 | t       | primarykey               |      |         | f           | 
+ meta.projection_property_extra.~meta.projection_property.~ref_projection              | meta.projection_property_extra | f       | t        | string | ref_projection           | text              | meta.projection_property     | ~ref_projection           | projection_name          |            |          |   999 | t       | ref_projection           |      |         | f           | 
+ meta.projection_entity_extra.~meta.projection_entity.~readonly                        | meta.projection_entity_extra   | f       | t        | string | readonly                 | boolean           | meta.projection_entity       | ~readonly                 | projection_name          |            |          |   999 | t       | readonly                 |      |         | f           | 
+ meta.relation_add.~meta.relation.~hint                                                | meta.relation_add              | f       | t        | string | hint                     | text              | meta.relation                | ~hint                     | relation_name            |            |          |   999 | t       | hint                     |      |         | f           | 
+ meta.projection_buttons.~meta.view_projection_buttons.~button                         | meta.projection_buttons        | f       | t        | string | button                   | text              | meta.view_projection_buttons | ~button                   | button                   |            |          |   999 | t       | button                   |      |         | f           | 
+ meta.projection_relation_extra.~meta.projection_relation.~hint                        | meta.projection_relation_extra | f       | t        | string | hint                     | text              | meta.projection_relation     | ~hint                     | projection_relation_name |            |          |   999 | t       | hint                     |      |         | f           | 
+ meta.relation_add.~meta.relation.~key                                                 | meta.relation_add              | f       | t        | string | key                      | character varying | meta.relation                | ~key                      | relation_name            |            |          |   999 | t       | key                      |      |         | f           | 
+ meta.entity_extra.~meta.entity.~entity                                                | meta.entity_extra              | f       | t        | string | entity                   | text              | meta.entity                  | ~entity                   | entity                   |            |          |   999 | t       | entity                   |      |         | f           | 
+ meta.projection_property_extra.~meta.projection_property.~title                       | meta.projection_property_extra | f       | t        | string | title                    | text              | meta.projection_property     | ~title                    | projection_name          |            |          |   999 | t       | title                    |      |         | f           | 
+ meta.page_block.~meta.view_page_block.~layout                                         | meta.page_block                | f       | t        | string | layout                   | integer           | meta.view_page_block         | ~layout                   | block_key                |            |          |   999 | t       | layout                   |      |         | f           | 
+ meta.projection_buttons.~meta.view_projection_buttons.~function                       | meta.projection_buttons        | f       | t        | string | function                 | text              | meta.view_projection_buttons | ~function                 | button                   |            |          |   999 | t       | function                 |      |         | f           | 
+ meta.projection_buttons.~meta.view_projection_buttons.~schema                         | meta.projection_buttons        | f       | t        | string | schema                   | text              | meta.view_projection_buttons | ~schema                   | button                   |            |          |   999 | t       | schema                   |      |         | f           | 
+ meta.pivot.~meta.property.~visible                                                    | meta.pivot                     | f       | t        | string | visible                  | boolean           | meta.property                | ~visible                  | entity                   |            |          |   999 | t       | visible                  |      |         | f           | 
+ meta.menu_item.~meta.menu.~role                                                       | meta.menu_item                 | f       | t        | string | role                     | text              | meta.menu                    | ~role                     | name                     |            |          |   999 | t       | role                     |      |         | f           | 
+ meta.projection_relation_extra.~meta.projection_relation_ex.~key                      | meta.projection_relation_extra | f       | t        | string | key                      | character varying | meta.projection_relation_ex  | ~key                      | projection_relation_name |            |          |   999 | t       | key                      |      |         | f           | 
+ meta.pivot.~meta.property.~type                                                       | meta.pivot                     | f       | t        | string | type                     | text              | meta.property                | ~type                     | entity                   |            |          |   999 | t       | type                     |      |         | f           | 
+ meta.projection_entity_extra.~meta.projection_entity.~title                           | meta.projection_entity_extra   | f       | t        | string | title                    | text              | meta.projection_entity       | ~title                    | projection_name          |            |          |   999 | t       | title                    |      |         | f           | 
+ meta.page_block.~meta.view_page_block.~path                                           | meta.page_block                | f       | t        | string | path                     | text              | meta.view_page_block         | ~path                     | block_key                |            |          |   999 | t       | path                     |      |         | f           | 
+ meta.page.~meta.view_page.~page_key                                                   | meta.page                      | f       | t        | string | page_key                 | text              | meta.view_page               | ~page_key                 | page_key                 |            |          |   999 | t       | page_key                 |      |         | f           | 
+ meta.page_block.~meta.view_page_block.~size_percent                                   | meta.page_block                | f       | t        | string | size_percent             | integer           | meta.view_page_block         | ~size_percent             | block_key                |            |          |   999 | t       | size_percent             |      |         | f           | 
+ meta.pivot.~meta.property.~data_type                                                  | meta.pivot                     | f       | t        | string | data_type                | USER-DEFINED      | meta.property                | ~data_type                | entity                   |            |          |   999 | t       | data_type                |      |         | f           | 
+ meta.projection_entity_extra.~meta.projection_entity.~additional                      | meta.projection_entity_extra   | f       | t        | string | additional               | text              | meta.projection_entity       | ~additional               | projection_name          |            |          |   999 | t       | additional               |      |         | f           | 
+ meta.pivot.~meta.property.~link_key                                                   | meta.pivot                     | f       | t        | string | link_key                 | text              | meta.property                | ~link_key                 | entity                   |            |          |   999 | t       | link_key                 |      |         | f           | 
+ meta.pivot.~meta.property.~pattern                                                    | meta.pivot                     | f       | t        | string | pattern                  | text              | meta.property                | ~pattern                  | entity                   |            |          |   999 | t       | pattern                  |      |         | f           | 
+ meta.menu_item.~meta.menu.~path                                                       | meta.menu_item                 | f       | t        | string | path                     | text              | meta.menu                    | ~path                     | name                     |            |          |   999 | t       | path                     |      |         | f           | 
+ meta.pivot.~meta.property.~ref_entity                                                 | meta.pivot                     | f       | t        | string | ref_entity               | text              | meta.property                | ~ref_entity               | entity                   |            |          |   999 | t       | ref_entity               |      |         | f           | 
+ meta.projection_buttons.~meta.view_projection_buttons.~projection_name                | meta.projection_buttons        | f       | t        | string | projection_name          | text              | meta.view_projection_buttons | ~projection_name          | button                   |            |          |   999 | t       | projection_name          |      |         | f           | 
+ meta.pivot.~meta.property.~ref_filter                                                 | meta.pivot                     | f       | t        | string | ref_filter               | text              | meta.property                | ~ref_filter               | entity                   |            |          |   999 | t       | ref_filter               |      |         | f           | 
+ meta.menu_item.~meta.menu.~key                                                        | meta.menu_item                 | f       | t        | string | key                      | text              | meta.menu                    | ~key                      | name                     |            |          |   999 | t       | key                      |      |         | f           | 
+ meta.page_block.~meta.view_page_block.~block_key                                      | meta.page_block                | f       | t        | string | block_key                | uuid              | meta.view_page_block         | ~block_key                | block_key                |            |          |   999 | t       | block_key                |      |         | f           | 
+ meta.entity_extra.~meta.entity.~view_definition                                       | meta.entity_extra              | f       | t        | string | view_definition          | USER-DEFINED      | meta.entity                  | ~view_definition          | entity                   |            |          |   999 | t       | view_definition          |      |         | f           | 
+ meta.projection_relation_extra.~meta.projection_relation.~visible                     | meta.projection_relation_extra | f       | t        | string | visible                  | boolean           | meta.projection_relation     | ~visible                  | projection_relation_name |            |          |   999 | t       | visible                  |      |         | f           | 
+ meta.projection_property_extra.~meta.projection_property.~pattern                     | meta.projection_property_extra | f       | t        | string | pattern                  | text              | meta.projection_property     | ~pattern                  | projection_name          |            |          |   999 | t       | pattern                  |      |         | f           | 
+ meta.pivot.~meta.property.~constraint_name                                            | meta.pivot                     | f       | t        | string | constraint_name          | USER-DEFINED      | meta.property                | ~constraint_name          | entity                   |            |          |   999 | t       | constraint_name          |      |         | f           | 
+ meta.projection_property_extra.~meta.projection_property.~ref_key                     | meta.projection_property_extra | f       | t        | string | ref_key                  | USER-DEFINED      | meta.projection_property     | ~ref_key                  | projection_name          |            |          |   999 | t       | ref_key                  |      |         | f           | 
+ meta.projection_property_extra.~meta.projection_property.~default                     | meta.projection_property_extra | f       | t        | string | default                  | text              | meta.projection_property     | ~default                  | projection_name          |            |          |   999 | t       | default                  |      |         | f           | 
+ meta.pivot.~meta.property.~ref_key                                                    | meta.pivot                     | f       | t        | string | ref_key                  | USER-DEFINED      | meta.property                | ~ref_key                  | entity                   |            |          |   999 | t       | ref_key                  |      |         | f           | 
+ meta.pivot.~meta.property.~hint                                                       | meta.pivot                     | f       | t        | string | hint                     | text              | meta.property                | ~hint                     | entity                   |            |          |   999 | t       | hint                     |      |         | f           | 
+ meta.entity_extra.~meta.entity.~hint                                                  | meta.entity_extra              | f       | t        | string | hint                     | text              | meta.entity                  | ~hint                     | entity                   |            |          |   999 | t       | hint                     |      |         | f           | 
+ meta.page.~meta.view_page.~title                                                      | meta.page                      | f       | t        | string | title                    | text              | meta.view_page               | ~title                    | page_key                 |            |          |   999 | t       | title                    |      |         | f           | 
+ meta.entity_extra.~meta.entity.~base_entity_key                                       | meta.entity_extra              | f       | t        | string | base_entity_key          | text              | meta.entity                  | ~base_entity_key          | entity                   |            |          |   999 | t       | base_entity_key          |      |         | f           | 
+ meta.projection_relation_extra.~meta.projection_relation_ex.~visible                  | meta.projection_relation_extra | f       | t        | string | visible                  | boolean           | meta.projection_relation_ex  | ~visible                  | projection_relation_name |            |          |   999 | t       | visible                  |      |         | f           | 
+ meta.projection_entity_extra.~meta.projection_entity.~base_entity                     | meta.projection_entity_extra   | f       | t        | string | base_entity              | text              | meta.projection_entity       | ~base_entity              | projection_name          |            |          |   999 | t       | base_entity              |      |         | f           | 
+ meta.pivot.~meta.property.~is_nullable                                                | meta.pivot                     | f       | t        | string | is_nullable              | boolean           | meta.property                | ~is_nullable              | entity                   |            |          |   999 | t       | is_nullable              |      |         | f           | 
+ meta.projection_relation_extra.~meta.projection_relation.~entity                      | meta.projection_relation_extra | f       | t        | string | entity                   | text              | meta.projection_relation     | ~entity                   | projection_relation_name |            |          |   999 | t       | entity                   |      |         | f           | 
+ meta.projection_relation_extra.~meta.projection_relation_ex.~readonly                 | meta.projection_relation_extra | f       | t        | string | readonly                 | boolean           | meta.projection_relation_ex  | ~readonly                 | projection_relation_name |            |          |   999 | t       | readonly                 |      |         | f           | 
+ meta.page_block.~meta.view_page_block.~parent_block                                   | meta.page_block                | f       | t        | string | parent_block             | uuid              | meta.view_page_block         | ~parent_block             | block_key                |            |          |   999 | t       | parent_block             |      |         | f           | 
+ meta.relation_add.~meta.relation.~entity                                              | meta.relation_add              | f       | t        | string | entity                   | text              | meta.relation                | ~entity                   | relation_name            |            |          |   999 | t       | entity                   |      |         | f           | 
+ meta.entity_extra.~meta.entity.~base_entity_id                                        | meta.entity_extra              | f       | t        | string | base_entity_id           | oid               | meta.entity                  | ~base_entity_id           | entity                   |            |          |   999 | t       | base_entity_id           |      |         | f           | 
+ meta.projection_property_extra.~meta.projection_property.~ref_entity                  | meta.projection_property_extra | f       | t        | string | ref_entity               | text              | meta.projection_property     | ~ref_entity               | projection_name          |            |          |   999 | t       | ref_entity               |      |         | f           | 
+ meta.relation_add.~meta.relation.~title                                               | meta.relation_add              | f       | t        | string | title                    | text              | meta.relation                | ~title                    | relation_name            |            |          |   999 | t       | title                    |      |         | f           | 
+ meta.projection_property_extra.~meta.projection_property.~concat_prev                 | meta.projection_property_extra | f       | t        | string | concat_prev              | boolean           | meta.projection_property     | ~concat_prev              | projection_name          |            |          |   999 | t       | concat_prev              |      |         | f           | 
+ meta.pivot.~meta.property.~column_name                                                | meta.pivot                     | f       | t        | string | column_name              | text              | meta.property                | ~column_name              | entity                   |            |          |   999 | t       | column_name              |      |         | f           | 
+ meta.projection_property_extra.~meta.projection_property.~order                       | meta.projection_property_extra | f       | t        | string | order                    | integer           | meta.projection_property     | ~order                    | projection_name          |            |          |   999 | t       | order                    |      |         | f           | 
+ meta.pivot.~meta.property.~order                                                      | meta.pivot                     | f       | t        | string | order                    | integer           | meta.property                | ~order                    | entity                   |            |          |   999 | t       | order                    |      |         | f           | 
+ meta.entity_extra.~meta.entity.~title                                                 | meta.entity_extra              | f       | t        | string | title                    | text              | meta.entity                  | ~title                    | entity                   |            |          |   999 | t       | title                    |      |         | f           | 
+ meta.menu_item.~meta.menu.~projection                                                 | meta.menu_item                 | f       | t        | string | projection               | text              | meta.menu                    | ~projection               | name                     |            |          |   999 | t       | projection               |      |         | f           | 
+ meta.projection_buttons.~meta.view_projection_buttons.~title                          | meta.projection_buttons        | f       | t        | string | title                    | text              | meta.view_projection_buttons | ~title                    | button                   |            |          |   999 | t       | title                    |      |         | f           | 
+ meta.projection_property_extra.~meta.projection_property.~type                        | meta.projection_property_extra | f       | t        | string | type                     | text              | meta.projection_property     | ~type                     | projection_name          |            |          |   999 | t       | type                     |      |         | f           | 
+ meta.projection_relation_extra.~meta.projection_relation.~projection_name             | meta.projection_relation_extra | f       | t        | string | projection_name          | text              | meta.projection_relation     | ~projection_name          | projection_relation_name |            |          |   999 | t       | projection_name          |      |         | f           | 
+ meta.projection_relation_extra.~meta.projection_relation_ex.~related_projection_name  | meta.projection_relation_extra | f       | t        | string | related_projection_name  | text              | meta.projection_relation_ex  | ~related_projection_name  | projection_relation_name |            |          |   999 | t       | related_projection_name  |      |         | f           | 
+ meta.projection_relation_extra.~meta.projection_relation_ex.~projection_name          | meta.projection_relation_extra | f       | t        | string | projection_name          | text              | meta.projection_relation_ex  | ~projection_name          | projection_relation_name |            |          |   999 | t       | projection_name          |      |         | f           | 
+ meta.projection_property_extra.~meta.projection_property.~projection_name             | meta.projection_property_extra | f       | t        | string | projection_name          | text              | meta.projection_property     | ~projection_name          | projection_name          |            |          |   999 | t       | projection_name          |      |         | f           | 
+ meta.projection_relation_extra.~meta.projection_relation_ex.~title                    | meta.projection_relation_extra | f       | t        | string | title                    | text              | meta.projection_relation_ex  | ~title                    | projection_relation_name |            |          |   999 | t       | title                    |      |         | f           | 
+ meta.projection_property_extra.~meta.projection_property.~ref_filter                  | meta.projection_property_extra | f       | t        | string | ref_filter               | text              | meta.projection_property     | ~ref_filter               | projection_name          |            |          |   999 | t       | ref_filter               |      |         | f           | 
+ meta.projection_entity_extra.~meta.projection_entity.~amount_dup                      | meta.projection_entity_extra   | f       | t        | string | amount_dup               | bigint            | meta.projection_entity       | ~amount_dup               | projection_name          |            |          |   999 | t       | amount_dup               |      |         | f           | 
+ meta.projection_relation_extra.~meta.projection_relation.~projection_relation_name    | meta.projection_relation_extra | f       | t        | string | projection_relation_name | text              | meta.projection_relation     | ~projection_relation_name | projection_relation_name |            |          |   999 | t       | projection_relation_name |      |         | f           | 
+ meta.projection_buttons.~meta.view_projection_buttons.~use_in_list                    | meta.projection_buttons        | f       | t        | string | use_in_list              | boolean           | meta.view_projection_buttons | ~use_in_list              | button                   |            |          |   999 | t       | use_in_list              |      |         | f           | 
+ meta.projection_relation_extra.~meta.projection_relation.~opened                      | meta.projection_relation_extra | f       | t        | string | opened                   | boolean           | meta.projection_relation     | ~opened                   | projection_relation_name |            |          |   999 | t       | opened                   |      |         | f           | 
+ meta.pivot.~meta.property.~title                                                      | meta.pivot                     | f       | t        | string | title                    | text              | meta.property                | ~title                    | entity                   |            |          |   999 | t       | title                    |      |         | f           | 
+ meta.entity_extra.~meta.entity.~base_entity                                           | meta.entity_extra              | f       | t        | string | base_entity              | text              | meta.entity                  | ~base_entity              | entity                   |            |          |   999 | t       | base_entity              |      |         | f           | 
+ meta.menu_item.~meta.menu.~name                                                       | meta.menu_item                 | f       | t        | string | name                     | text              | meta.menu                    | ~name                     | name                     |            |          |   999 | t       | name                     |      |         | f           | 
+ meta.projection_relation_extra.~meta.projection_relation.~key                         | meta.projection_relation_extra | f       | t        | string | key                      | character varying | meta.projection_relation     | ~key                      | projection_relation_name |            |          |   999 | t       | key                      |      |         | f           | 
+ meta.menu_item.~meta.menu.~style                                                      | meta.menu_item                 | f       | t        | string | style                    | text              | meta.menu                    | ~style                    | name                     |            |          |   999 | t       | style                    |      |         | f           | 
+ meta.projection_property_extra.~meta.projection_property.~projection_property_name    | meta.projection_property_extra | f       | t        | string | projection_property_name | text              | meta.projection_property     | ~projection_property_name | projection_name          |            |          |   999 | t       | projection_property_name |      |         | f           | 
+ meta.entity_extra.~meta.entity.~entity_id                                             | meta.entity_extra              | f       | t        | string | entity_id                | oid               | meta.entity                  | ~entity_id                | entity                   |            |          |   999 | t       | entity_id                |      |         | f           | 
+ meta.projection_property_extra.~meta.projection_property.~original_column_name        | meta.projection_property_extra | f       | t        | string | original_column_name     | text              | meta.projection_property     | ~original_column_name     | projection_name          |            |          |   999 | t       | original_column_name     |      |         | f           | 
+ meta.pivot.~meta.property.~readonly                                                   | meta.pivot                     | f       | t        | string | readonly                 | boolean           | meta.property                | ~readonly                 | entity                   |            |          |   999 | t       | readonly                 |      |         | f           | 
+ meta.projection_property_extra.~meta.projection_property.~is_nullable                 | meta.projection_property_extra | f       | t        | string | is_nullable              | boolean           | meta.projection_property     | ~is_nullable              | projection_name          |            |          |   999 | t       | is_nullable              |      |         | f           | 
+ meta.pivot.~meta.property.~property_name                                              | meta.pivot                     | f       | t        | string | property_name            | text              | meta.property                | ~property_name            | entity                   |            |          |   999 | t       | property_name            |      |         | f           | 
+ meta.projection_relation_extra.~meta.projection_relation.~readonly                    | meta.projection_relation_extra | f       | t        | string | readonly                 | boolean           | meta.projection_relation     | ~readonly                 | projection_relation_name |            |          |   999 | t       | readonly                 |      |         | f           | 
+ meta.projection_property_extra.~meta.projection_property.~column_name                 | meta.projection_property_extra | f       | t        | string | column_name              | text              | meta.projection_property     | ~column_name              | projection_name          |            |          |   999 | t       | column_name              |      |         | f           | 
+ meta.page_block.~meta.view_page_block.~view_id                                        | meta.page_block                | f       | t        | string | view_id                  | text              | meta.view_page_block         | ~view_id                  | block_key                |            |          |   999 | t       | view_id                  |      |         | f           | 
+ meta.projection_property_extra.~meta.projection_property.~visible                     | meta.projection_property_extra | f       | t        | string | visible                  | boolean           | meta.projection_property     | ~visible                  | projection_name          |            |          |   999 | t       | visible                  |      |         | f           | 
+ meta.relation_add.~meta.relation.~relation_name                                       | meta.relation_add              | f       | t        | string | relation_name            | text              | meta.relation                | ~relation_name            | relation_name            |            |          |   999 | t       | relation_name            |      |         | f           | 
+ meta.projection_entity_extra.~meta.projection_entity.~ems_en                          | meta.projection_entity_extra   | f       | t        | string | ems_en                   | integer           | meta.projection_entity       | ~ems_en                   | projection_name          |            |          |   999 | t       | ems_en                   |      |         | f           | 
+ meta.relation_add.~meta.relation.~ems_en                                              | meta.relation_add              | f       | t        | string | ems_en                   | integer           | meta.relation                | ~ems_en                   | relation_name            |            |          |   999 | t       | ems_en                   |      |         | f           | 
+ meta.projection_property_extra.~meta.projection_property.~readonly                    | meta.projection_property_extra | f       | t        | string | readonly                 | boolean           | meta.projection_property     | ~readonly                 | projection_name          |            |          |   999 | t       | readonly                 |      |         | f           | 
+ meta.projection_property_extra.~meta.projection_property.~hint                        | meta.projection_property_extra | f       | t        | string | hint                     | text              | meta.projection_property     | ~hint                     | projection_name          |            |          |   999 | t       | hint                     |      |         | f           | 
+ meta.projection_property_extra.~meta.projection_property.~virtual                     | meta.projection_property_extra | f       | t        | string | virtual                  | boolean           | meta.projection_property     | ~virtual                  | projection_name          |            |          |   999 | t       | virtual                  |      |         | f           | 
+ meta.projection_relation_extra.~meta.projection_relation_ex.~projection_relation_name | meta.projection_relation_extra | f       | t        | string | projection_relation_name | text              | meta.projection_relation_ex  | ~projection_relation_name | projection_relation_name |            |          |   999 | t       | projection_relation_name |      |         | f           | 
+ meta.relation_add.~meta.relation.~relation_entity                                     | meta.relation_add              | f       | t        | string | relation_entity          | text              | meta.relation                | ~relation_entity          | relation_name            |            |          |   999 | t       | relation_entity          |      |         | f           | 
+ meta.projection_property_extra.~meta.projection_property.~link_key                    | meta.projection_property_extra | f       | t        | string | link_key                 | text              | meta.projection_property     | ~link_key                 | projection_name          |            |          |   999 | t       | link_key                 |      |         | f           | 
+ meta.entity_extra.~meta.entity.~ems_en                                                | meta.entity_extra              | f       | t        | string | ems_en                   | integer           | meta.entity                  | ~ems_en                   | entity                   |            |          |   999 | t       | ems_en                   |      |         | f           | 
+(120 rows)
+
+ 
+SELECT * FROM  meta.projection_property;
+              projection_property_name               |          title           |  type  | readonly | visible |      projection_name       |        column_name        |         ref_key          |     ref_projection      | link_key | order |          ref_entity          | ref_filter | concat_prev | virtual |   original_column_name   | hint | pattern | is_nullable | default 
+-----------------------------------------------------+--------------------------+--------+----------+---------+----------------------------+---------------------------+--------------------------+-------------------------+----------+-------+------------------------------+------------+-------------+---------+--------------------------+------+---------+-------------+---------
+                                                     |                          |        |          |         | base_entity                |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | base_table                 |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | columns                    |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | constraint_column_usage    |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | constraint_column_usage_ex |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | entity                     |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+ entity_extra.~entity                                | entity                   | string | t        | f       | entity_extra               | ~entity                   | entity                   | entity                  |          |   999 | meta.entity                  |            | f           | t       | entity                   |      |         | f           | 
+ entity_extra.~ems_en                                | ems_en                   | string | t        | f       | entity_extra               | ~ems_en                   | entity                   | entity                  |          |   999 | meta.entity                  |            | f           | t       | ems_en                   |      |         | f           | 
+ entity_extra.~base_entity                           | base_entity              | string | t        | f       | entity_extra               | ~base_entity              | entity                   | entity                  |          |   999 | meta.entity                  |            | f           | t       | base_entity              |      |         | f           | 
+ entity_extra.~title                                 | title                    | string | t        | f       | entity_extra               | ~title                    | entity                   | entity                  |          |   999 | meta.entity                  |            | f           | t       | title                    |      |         | f           | 
+ entity_extra.~primarykey                            | primarykey               | string | t        | f       | entity_extra               | ~primarykey               | entity                   | entity                  |          |   999 | meta.entity                  |            | f           | t       | primarykey               |      |         | f           | 
+ entity_extra.~table_type                            | table_type               | string | t        | f       | entity_extra               | ~table_type               | entity                   | entity                  |          |   999 | meta.entity                  |            | f           | t       | table_type               |      |         | f           | 
+ entity_extra.~base_entity_id                        | base_entity_id           | string | t        | f       | entity_extra               | ~base_entity_id           | entity                   | entity                  |          |   999 | meta.entity                  |            | f           | t       | base_entity_id           |      |         | f           | 
+ entity_extra.~view_definition                       | view_definition          | string | t        | f       | entity_extra               | ~view_definition          | entity                   | entity                  |          |   999 | meta.entity                  |            | f           | t       | view_definition          |      |         | f           | 
+ entity_extra.~hint                                  | hint                     | string | t        | f       | entity_extra               | ~hint                     | entity                   | entity                  |          |   999 | meta.entity                  |            | f           | t       | hint                     |      |         | f           | 
+ entity_extra.~base_entity_key                       | base_entity_key          | string | t        | f       | entity_extra               | ~base_entity_key          | entity                   | entity                  |          |   999 | meta.entity                  |            | f           | t       | base_entity_key          |      |         | f           | 
+ entity_extra.~entity_id                             | entity_id                | string | t        | f       | entity_extra               | ~entity_id                | entity                   | entity                  |          |   999 | meta.entity                  |            | f           | t       | entity_id                |      |         | f           | 
+                                                     |                          |        |          |         | entity_type                |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | functions                  |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | menu                       |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+ menu_item.~role                                     | role                     | string | t        | f       | menu_item                  | ~role                     | name                     | menu                    |          |   999 | meta.menu                    |            | f           | t       | role                     |      |         | f           | 
+ menu_item.~title                                    | title                    | string | t        | f       | menu_item                  | ~title                    | name                     | menu                    |          |   999 | meta.menu                    |            | f           | t       | title                    |      |         | f           | 
+ menu_item.~key                                      | key                      | string | t        | f       | menu_item                  | ~key                      | name                     | menu                    |          |   999 | meta.menu                    |            | f           | t       | key                      |      |         | f           | 
+ menu_item.~projection                               | projection               | string | t        | f       | menu_item                  | ~projection               | name                     | menu                    |          |   999 | meta.menu                    |            | f           | t       | projection               |      |         | f           | 
+ menu_item.~style                                    | style                    | string | t        | f       | menu_item                  | ~style                    | name                     | menu                    |          |   999 | meta.menu                    |            | f           | t       | style                    |      |         | f           | 
+ menu_item.~parent                                   | parent                   | string | t        | f       | menu_item                  | ~parent                   | name                     | menu                    |          |   999 | meta.menu                    |            | f           | t       | parent                   |      |         | f           | 
+ menu_item.~view_id                                  | view_id                  | string | t        | f       | menu_item                  | ~view_id                  | name                     | menu                    |          |   999 | meta.menu                    |            | f           | t       | view_id                  |      |         | f           | 
+ menu_item.~iconclass                                | iconclass                | string | t        | f       | menu_item                  | ~iconclass                | name                     | menu                    |          |   999 | meta.menu                    |            | f           | t       | iconclass                |      |         | f           | 
+ menu_item.~name                                     | name                     | string | t        | f       | menu_item                  | ~name                     | name                     | menu                    |          |   999 | meta.menu                    |            | f           | t       | name                     |      |         | f           | 
+ menu_item.~path                                     | path                     | string | t        | f       | menu_item                  | ~path                     | name                     | menu                    |          |   999 | meta.menu                    |            | f           | t       | path                     |      |         | f           | 
+ page.~title                                         | title                    | string | t        | f       | page                       | ~title                    | page_key                 | view_page               |          |   999 | meta.view_page               |            | f           | t       | title                    |      |         | f           | 
+ page.~page_key                                      | page_key                 | string | t        | f       | page                       | ~page_key                 | page_key                 | view_page               |          |   999 | meta.view_page               |            | f           | t       | page_key                 |      |         | f           | 
+ page_block.~entity_id                               | entity_id                | string | t        | f       | page_block                 | ~entity_id                | block_key                | view_page_block         |          |   999 | meta.view_page_block         |            | f           | t       | entity_id                |      |         | f           | 
+ page_block.~size_percent                            | size_percent             | string | t        | f       | page_block                 | ~size_percent             | block_key                | view_page_block         |          |   999 | meta.view_page_block         |            | f           | t       | size_percent             |      |         | f           | 
+ page_block.~path                                    | path                     | string | t        | f       | page_block                 | ~path                     | block_key                | view_page_block         |          |   999 | meta.view_page_block         |            | f           | t       | path                     |      |         | f           | 
+ page_block.~level                                   | level                    | string | t        | f       | page_block                 | ~level                    | block_key                | view_page_block         |          |   999 | meta.view_page_block         |            | f           | t       | level                    |      |         | f           | 
+ page_block.~view_id                                 | view_id                  | string | t        | f       | page_block                 | ~view_id                  | block_key                | view_page_block         |          |   999 | meta.view_page_block         |            | f           | t       | view_id                  |      |         | f           | 
+ page_block.~projection_name                         | projection_name          | string | t        | f       | page_block                 | ~projection_name          | block_key                | view_page_block         |          |   999 | meta.view_page_block         |            | f           | t       | projection_name          |      |         | f           | 
+ page_block.~parent_block                            | parent_block             | string | t        | f       | page_block                 | ~parent_block             | block_key                | view_page_block         |          |   999 | meta.view_page_block         |            | f           | t       | parent_block             |      |         | f           | 
+ page_block.~block_key                               | block_key                | string | t        | f       | page_block                 | ~block_key                | block_key                | view_page_block         |          |   999 | meta.view_page_block         |            | f           | t       | block_key                |      |         | f           | 
+ page_block.~layout                                  | layout                   | string | t        | f       | page_block                 | ~layout                   | block_key                | view_page_block         |          |   999 | meta.view_page_block         |            | f           | t       | layout                   |      |         | f           | 
+ page_block.~order                                   | order                    | string | t        | f       | page_block                 | ~order                    | block_key                | view_page_block         |          |   999 | meta.view_page_block         |            | f           | t       | order                    |      |         | f           | 
+ page_block.~page_key                                | page_key                 | string | t        | f       | page_block                 | ~page_key                 | block_key                | view_page_block         |          |   999 | meta.view_page_block         |            | f           | t       | page_key                 |      |         | f           | 
+                                                     |                          |        |          |         | page_block_layout          |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+ pivot.~default                                      | default                  | string | t        | f       | pivot                      | ~default                  | entity                   | property                |          |   999 | meta.property                |            | f           | t       | default                  |      |         | f           | 
+ pivot.~visible                                      | visible                  | string | t        | f       | pivot                      | ~visible                  | entity                   | property                |          |   999 | meta.property                |            | f           | t       | visible                  |      |         | f           | 
+ pivot.~link_key                                     | link_key                 | string | t        | f       | pivot                      | ~link_key                 | entity                   | property                |          |   999 | meta.property                |            | f           | t       | link_key                 |      |         | f           | 
+ pivot.~readonly                                     | readonly                 | string | t        | f       | pivot                      | ~readonly                 | entity                   | property                |          |   999 | meta.property                |            | f           | t       | readonly                 |      |         | f           | 
+ pivot.~is_nullable                                  | is_nullable              | string | t        | f       | pivot                      | ~is_nullable              | entity                   | property                |          |   999 | meta.property                |            | f           | t       | is_nullable              |      |         | f           | 
+ pivot.~title                                        | title                    | string | t        | f       | pivot                      | ~title                    | entity                   | property                |          |   999 | meta.property                |            | f           | t       | title                    |      |         | f           | 
+ pivot.~ref_entity                                   | ref_entity               | string | t        | f       | pivot                      | ~ref_entity               | entity                   | property                |          |   999 | meta.property                |            | f           | t       | ref_entity               |      |         | f           | 
+ pivot.~data_type                                    | data_type                | string | t        | f       | pivot                      | ~data_type                | entity                   | property                |          |   999 | meta.property                |            | f           | t       | data_type                |      |         | f           | 
+ pivot.~ref_filter                                   | ref_filter               | string | t        | f       | pivot                      | ~ref_filter               | entity                   | property                |          |   999 | meta.property                |            | f           | t       | ref_filter               |      |         | f           | 
+ pivot.~pattern                                      | pattern                  | string | t        | f       | pivot                      | ~pattern                  | entity                   | property                |          |   999 | meta.property                |            | f           | t       | pattern                  |      |         | f           | 
+ pivot.~type                                         | type                     | string | t        | f       | pivot                      | ~type                     | entity                   | property                |          |   999 | meta.property                |            | f           | t       | type                     |      |         | f           | 
+ pivot.~column_name                                  | column_name              | string | t        | f       | pivot                      | ~column_name              | entity                   | property                |          |   999 | meta.property                |            | f           | t       | column_name              |      |         | f           | 
+ pivot.~entity                                       | entity                   | string | t        | f       | pivot                      | ~entity                   | entity                   | property                |          |   999 | meta.property                |            | f           | t       | entity                   |      |         | f           | 
+ pivot.~hint                                         | hint                     | string | t        | f       | pivot                      | ~hint                     | entity                   | property                |          |   999 | meta.property                |            | f           | t       | hint                     |      |         | f           | 
+ pivot.~constraint_name                              | constraint_name          | string | t        | f       | pivot                      | ~constraint_name          | entity                   | property                |          |   999 | meta.property                |            | f           | t       | constraint_name          |      |         | f           | 
+ pivot.~property_name                                | property_name            | string | t        | f       | pivot                      | ~property_name            | entity                   | property                |          |   999 | meta.property                |            | f           | t       | property_name            |      |         | f           | 
+ pivot.~ref_key                                      | ref_key                  | string | t        | f       | pivot                      | ~ref_key                  | entity                   | property                |          |   999 | meta.property                |            | f           | t       | ref_key                  |      |         | f           | 
+ pivot.~order                                        | order                    | string | t        | f       | pivot                      | ~order                    | entity                   | property                |          |   999 | meta.property                |            | f           | t       | order                    |      |         | f           | 
+ projection_buttons.~schema                          | schema                   | string | t        | f       | projection_buttons         | ~schema                   | button                   | view_projection_buttons |          |   999 | meta.view_projection_buttons |            | f           | t       | schema                   |      |         | f           | 
+ projection_buttons.~projection_name                 | projection_name          | string | t        | f       | projection_buttons         | ~projection_name          | button                   | view_projection_buttons |          |   999 | meta.view_projection_buttons |            | f           | t       | projection_name          |      |         | f           | 
+ projection_buttons.~icon                            | icon                     | string | t        | f       | projection_buttons         | ~icon                     | button                   | view_projection_buttons |          |   999 | meta.view_projection_buttons |            | f           | t       | icon                     |      |         | f           | 
+ projection_buttons.~use_in_list                     | use_in_list              | string | t        | f       | projection_buttons         | ~use_in_list              | button                   | view_projection_buttons |          |   999 | meta.view_projection_buttons |            | f           | t       | use_in_list              |      |         | f           | 
+ projection_buttons.~title                           | title                    | string | t        | f       | projection_buttons         | ~title                    | button                   | view_projection_buttons |          |   999 | meta.view_projection_buttons |            | f           | t       | title                    |      |         | f           | 
+ projection_buttons.~function                        | function                 | string | t        | f       | projection_buttons         | ~function                 | button                   | view_projection_buttons |          |   999 | meta.view_projection_buttons |            | f           | t       | function                 |      |         | f           | 
+ projection_buttons.~button                          | button                   | string | t        | f       | projection_buttons         | ~button                   | button                   | view_projection_buttons |          |   999 | meta.view_projection_buttons |            | f           | t       | button                   |      |         | f           | 
+                                                     |                          |        |          |         | projection_entity          |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+ projection_entity_extra.~ems_en                     | ems_en                   | string | t        | f       | projection_entity_extra    | ~ems_en                   | projection_name          | projection_entity       |          |   999 | meta.projection_entity       |            | f           | t       | ems_en                   |      |         | f           | 
+ projection_entity_extra.~primarykey                 | primarykey               | string | t        | f       | projection_entity_extra    | ~primarykey               | projection_name          | projection_entity       |          |   999 | meta.projection_entity       |            | f           | t       | primarykey               |      |         | f           | 
+ projection_entity_extra.~additional                 | additional               | string | t        | f       | projection_entity_extra    | ~additional               | projection_name          | projection_entity       |          |   999 | meta.projection_entity       |            | f           | t       | additional               |      |         | f           | 
+ projection_entity_extra.~jump                       | jump                     | string | t        | f       | projection_entity_extra    | ~jump                     | projection_name          | projection_entity       |          |   999 | meta.projection_entity       |            | f           | t       | jump                     |      |         | f           | 
+ projection_entity_extra.~base_entity                | base_entity              | string | t        | f       | projection_entity_extra    | ~base_entity              | projection_name          | projection_entity       |          |   999 | meta.projection_entity       |            | f           | t       | base_entity              |      |         | f           | 
+ projection_entity_extra.~title                      | title                    | string | t        | f       | projection_entity_extra    | ~title                    | projection_name          | projection_entity       |          |   999 | meta.projection_entity       |            | f           | t       | title                    |      |         | f           | 
+ projection_entity_extra.~amount_dup                 | amount_dup               | string | t        | f       | projection_entity_extra    | ~amount_dup               | projection_name          | projection_entity       |          |   999 | meta.projection_entity       |            | f           | t       | amount_dup               |      |         | f           | 
+ projection_entity_extra.~entity                     | entity                   | string | t        | f       | projection_entity_extra    | ~entity                   | projection_name          | projection_entity       |          |   999 | meta.projection_entity       |            | f           | t       | entity                   |      |         | f           | 
+ projection_entity_extra.~projection_name            | projection_name          | string | t        | f       | projection_entity_extra    | ~projection_name          | projection_name          | projection_entity       |          |   999 | meta.projection_entity       |            | f           | t       | projection_name          |      |         | f           | 
+ projection_entity_extra.~readonly                   | readonly                 | string | t        | f       | projection_entity_extra    | ~readonly                 | projection_name          | projection_entity       |          |   999 | meta.projection_entity       |            | f           | t       | readonly                 |      |         | f           | 
+ projection_entity_extra.~hint                       | hint                     | string | t        | f       | projection_entity_extra    | ~hint                     | projection_name          | projection_entity       |          |   999 | meta.projection_entity       |            | f           | t       | hint                     |      |         | f           | 
+                                                     |                          |        |          |         | projection_property        |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+ projection_property_extra.~ref_projection           | ref_projection           | string | t        | f       | projection_property_extra  | ~ref_projection           | projection_name          | projection_property     |          |   999 | meta.projection_property     |            | f           | t       | ref_projection           |      |         | f           | 
+ projection_property_extra.~type                     | type                     | string | t        | f       | projection_property_extra  | ~type                     | projection_name          | projection_property     |          |   999 | meta.projection_property     |            | f           | t       | type                     |      |         | f           | 
+ projection_property_extra.~pattern                  | pattern                  | string | t        | f       | projection_property_extra  | ~pattern                  | projection_name          | projection_property     |          |   999 | meta.projection_property     |            | f           | t       | pattern                  |      |         | f           | 
+ projection_property_extra.~title                    | title                    | string | t        | f       | projection_property_extra  | ~title                    | projection_name          | projection_property     |          |   999 | meta.projection_property     |            | f           | t       | title                    |      |         | f           | 
+ projection_property_extra.~ref_filter               | ref_filter               | string | t        | f       | projection_property_extra  | ~ref_filter               | projection_name          | projection_property     |          |   999 | meta.projection_property     |            | f           | t       | ref_filter               |      |         | f           | 
+ projection_property_extra.~readonly                 | readonly                 | string | t        | f       | projection_property_extra  | ~readonly                 | projection_name          | projection_property     |          |   999 | meta.projection_property     |            | f           | t       | readonly                 |      |         | f           | 
+ projection_property_extra.~projection_name          | projection_name          | string | t        | f       | projection_property_extra  | ~projection_name          | projection_name          | projection_property     |          |   999 | meta.projection_property     |            | f           | t       | projection_name          |      |         | f           | 
+ projection_property_extra.~link_key                 | link_key                 | string | t        | f       | projection_property_extra  | ~link_key                 | projection_name          | projection_property     |          |   999 | meta.projection_property     |            | f           | t       | link_key                 |      |         | f           | 
+ projection_property_extra.~concat_prev              | concat_prev              | string | t        | f       | projection_property_extra  | ~concat_prev              | projection_name          | projection_property     |          |   999 | meta.projection_property     |            | f           | t       | concat_prev              |      |         | f           | 
+ projection_property_extra.~original_column_name     | original_column_name     | string | t        | f       | projection_property_extra  | ~original_column_name     | projection_name          | projection_property     |          |   999 | meta.projection_property     |            | f           | t       | original_column_name     |      |         | f           | 
+ projection_property_extra.~column_name              | column_name              | string | t        | f       | projection_property_extra  | ~column_name              | projection_name          | projection_property     |          |   999 | meta.projection_property     |            | f           | t       | column_name              |      |         | f           | 
+ projection_property_extra.~ref_key                  | ref_key                  | string | t        | f       | projection_property_extra  | ~ref_key                  | projection_name          | projection_property     |          |   999 | meta.projection_property     |            | f           | t       | ref_key                  |      |         | f           | 
+ projection_property_extra.~order                    | order                    | string | t        | f       | projection_property_extra  | ~order                    | projection_name          | projection_property     |          |   999 | meta.projection_property     |            | f           | t       | order                    |      |         | f           | 
+ projection_property_extra.~ref_entity               | ref_entity               | string | t        | f       | projection_property_extra  | ~ref_entity               | projection_name          | projection_property     |          |   999 | meta.projection_property     |            | f           | t       | ref_entity               |      |         | f           | 
+ projection_property_extra.~default                  | default                  | string | t        | f       | projection_property_extra  | ~default                  | projection_name          | projection_property     |          |   999 | meta.projection_property     |            | f           | t       | default                  |      |         | f           | 
+ projection_property_extra.~hint                     | hint                     | string | t        | f       | projection_property_extra  | ~hint                     | projection_name          | projection_property     |          |   999 | meta.projection_property     |            | f           | t       | hint                     |      |         | f           | 
+ projection_property_extra.~is_nullable              | is_nullable              | string | t        | f       | projection_property_extra  | ~is_nullable              | projection_name          | projection_property     |          |   999 | meta.projection_property     |            | f           | t       | is_nullable              |      |         | f           | 
+ projection_property_extra.~projection_property_name | projection_property_name | string | t        | f       | projection_property_extra  | ~projection_property_name | projection_name          | projection_property     |          |   999 | meta.projection_property     |            | f           | t       | projection_property_name |      |         | f           | 
+ projection_property_extra.~visible                  | visible                  | string | t        | f       | projection_property_extra  | ~visible                  | projection_name          | projection_property     |          |   999 | meta.projection_property     |            | f           | t       | visible                  |      |         | f           | 
+ projection_property_extra.~virtual                  | virtual                  | string | t        | f       | projection_property_extra  | ~virtual                  | projection_name          | projection_property     |          |   999 | meta.projection_property     |            | f           | t       | virtual                  |      |         | f           | 
+                                                     |                          |        |          |         | projection_redirect        |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | projection_relation        |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | projection_relation_ex     |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+ projection_relation_extra.~entity                   | entity                   | string | t        | f       | projection_relation_extra  | ~entity                   | projection_relation_name | projection_relation     |          |   999 | meta.projection_relation     |            | f           | t       | entity                   |      |         | f           | 
+ projection_relation_extra.~projection_name          | projection_name          | string | t        | f       | projection_relation_extra  | ~projection_name          | projection_relation_name | projection_relation_ex  |          |   999 | meta.projection_relation_ex  |            | f           | t       | projection_name          |      |         | f           | 
+ projection_relation_extra.~projection_relation_name | projection_relation_name | string | t        | f       | projection_relation_extra  | ~projection_relation_name | projection_relation_name | projection_relation     |          |   999 | meta.projection_relation     |            | f           | t       | projection_relation_name |      |         | f           | 
+ projection_relation_extra.~title                    | title                    | string | t        | f       | projection_relation_extra  | ~title                    | projection_relation_name | projection_relation     |          |   999 | meta.projection_relation     |            | f           | t       | title                    |      |         | f           | 
+ projection_relation_extra.~readonly                 | readonly                 | string | t        | f       | projection_relation_extra  | ~readonly                 | projection_relation_name | projection_relation     |          |   999 | meta.projection_relation     |            | f           | t       | readonly                 |      |         | f           | 
+ projection_relation_extra.~opened                   | opened                   | string | t        | f       | projection_relation_extra  | ~opened                   | projection_relation_name | projection_relation     |          |   999 | meta.projection_relation     |            | f           | t       | opened                   |      |         | f           | 
+ projection_relation_extra.~related_projection_name  | related_projection_name  | string | t        | f       | projection_relation_extra  | ~related_projection_name  | projection_relation_name | projection_relation     |          |   999 | meta.projection_relation     |            | f           | t       | related_projection_name  |      |         | f           | 
+ projection_relation_extra.~projection_relation_name | projection_relation_name | string | t        | f       | projection_relation_extra  | ~projection_relation_name | projection_relation_name | projection_relation_ex  |          |   999 | meta.projection_relation_ex  |            | f           | t       | projection_relation_name |      |         | f           | 
+ projection_relation_extra.~projection_name          | projection_name          | string | t        | f       | projection_relation_extra  | ~projection_name          | projection_relation_name | projection_relation     |          |   999 | meta.projection_relation     |            | f           | t       | projection_name          |      |         | f           | 
+ projection_relation_extra.~order                    | order                    | string | t        | f       | projection_relation_extra  | ~order                    | projection_relation_name | projection_relation     |          |   999 | meta.projection_relation     |            | f           | t       | order                    |      |         | f           | 
+ projection_relation_extra.~key                      | key                      | string | t        | f       | projection_relation_extra  | ~key                      | projection_relation_name | projection_relation_ex  |          |   999 | meta.projection_relation_ex  |            | f           | t       | key                      |      |         | f           | 
+ projection_relation_extra.~key                      | key                      | string | t        | f       | projection_relation_extra  | ~key                      | projection_relation_name | projection_relation     |          |   999 | meta.projection_relation     |            | f           | t       | key                      |      |         | f           | 
+ projection_relation_extra.~title                    | title                    | string | t        | f       | projection_relation_extra  | ~title                    | projection_relation_name | projection_relation_ex  |          |   999 | meta.projection_relation_ex  |            | f           | t       | title                    |      |         | f           | 
+ projection_relation_extra.~hint                     | hint                     | string | t        | f       | projection_relation_extra  | ~hint                     | projection_relation_name | projection_relation     |          |   999 | meta.projection_relation     |            | f           | t       | hint                     |      |         | f           | 
+ projection_relation_extra.~view_id                  | view_id                  | string | t        | f       | projection_relation_extra  | ~view_id                  | projection_relation_name | projection_relation     |          |   999 | meta.projection_relation     |            | f           | t       | view_id                  |      |         | f           | 
+ projection_relation_extra.~entity                   | entity                   | string | t        | f       | projection_relation_extra  | ~entity                   | projection_relation_name | projection_relation_ex  |          |   999 | meta.projection_relation_ex  |            | f           | t       | entity                   |      |         | f           | 
+ projection_relation_extra.~readonly                 | readonly                 | string | t        | f       | projection_relation_extra  | ~readonly                 | projection_relation_name | projection_relation_ex  |          |   999 | meta.projection_relation_ex  |            | f           | t       | readonly                 |      |         | f           | 
+ projection_relation_extra.~relation_entity          | relation_entity          | string | t        | f       | projection_relation_extra  | ~relation_entity          | projection_relation_name | projection_relation     |          |   999 | meta.projection_relation     |            | f           | t       | relation_entity          |      |         | f           | 
+ projection_relation_extra.~relation_entity          | relation_entity          | string | t        | f       | projection_relation_extra  | ~relation_entity          | projection_relation_name | projection_relation_ex  |          |   999 | meta.projection_relation_ex  |            | f           | t       | relation_entity          |      |         | f           | 
+ projection_relation_extra.~related_projection_name  | related_projection_name  | string | t        | f       | projection_relation_extra  | ~related_projection_name  | projection_relation_name | projection_relation_ex  |          |   999 | meta.projection_relation_ex  |            | f           | t       | related_projection_name  |      |         | f           | 
+ projection_relation_extra.~visible                  | visible                  | string | t        | f       | projection_relation_extra  | ~visible                  | projection_relation_name | projection_relation_ex  |          |   999 | meta.projection_relation_ex  |            | f           | t       | visible                  |      |         | f           | 
+ projection_relation_extra.~visible                  | visible                  | string | t        | f       | projection_relation_extra  | ~visible                  | projection_relation_name | projection_relation     |          |   999 | meta.projection_relation     |            | f           | t       | visible                  |      |         | f           | 
+                                                     |                          |        |          |         | property                   |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | property_add               |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | property_extra             |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | property_type              |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | reference                  |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | relation                   |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+ relation_add.~order                                 | order                    | string | t        | f       | relation_add               | ~order                    | relation_name            | relation                |          |   999 | meta.relation                |            | f           | t       | order                    |      |         | f           | 
+ relation_add.~relation_name                         | relation_name            | string | t        | f       | relation_add               | ~relation_name            | relation_name            | relation                |          |   999 | meta.relation                |            | f           | t       | relation_name            |      |         | f           | 
+ relation_add.~relation_entity                       | relation_entity          | string | t        | f       | relation_add               | ~relation_entity          | relation_name            | relation                |          |   999 | meta.relation                |            | f           | t       | relation_entity          |      |         | f           | 
+ relation_add.~hint                                  | hint                     | string | t        | f       | relation_add               | ~hint                     | relation_name            | relation                |          |   999 | meta.relation                |            | f           | t       | hint                     |      |         | f           | 
+ relation_add.~entity                                | entity                   | string | t        | f       | relation_add               | ~entity                   | relation_name            | relation                |          |   999 | meta.relation                |            | f           | t       | entity                   |      |         | f           | 
+ relation_add.~key                                   | key                      | string | t        | f       | relation_add               | ~key                      | relation_name            | relation                |          |   999 | meta.relation                |            | f           | t       | key                      |      |         | f           | 
+ relation_add.~title                                 | title                    | string | t        | f       | relation_add               | ~title                    | relation_name            | relation                |          |   999 | meta.relation                |            | f           | t       | title                    |      |         | f           | 
+ relation_add.~ems_en                                | ems_en                   | string | t        | f       | relation_add               | ~ems_en                   | relation_name            | relation                |          |   999 | meta.relation                |            | f           | t       | ems_en                   |      |         | f           | 
+                                                     |                          |        |          |         | relation_extra             |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | schema                     |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | table_constraints          |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | table_relation             |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | tables                     |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | user_list                  |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | view_entity                |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | view_page                  |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | view_page_block            |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | view_projection_buttons    |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | view_projection_entity     |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | view_projection_property   |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+                                                     |                          |        |          |         | view_projection_relation   |                           |                          |                         |          |       |                              |            | f           |         |                          |      |         |             | 
+(154 rows)
+
+ 
+SELECT * FROM  meta.projection_relation_ex;
+ projection_relation_name | title | related_projection_name | readonly | visible |      projection_name       | relation_entity | entity | key 
+--------------------------+-------+-------------------------+----------+---------+----------------------------+-----------------+--------+-----
+                          |       |                         | f        | t       | tables                     |                 |        | 
+                          |       |                         | f        | t       | base_entity                |                 |        | 
+                          |       |                         | f        | t       | base_table                 |                 |        | 
+                          |       |                         | f        | t       | columns                    |                 |        | 
+                          |       |                         | f        | t       | constraint_column_usage    |                 |        | 
+                          |       |                         | f        | t       | constraint_column_usage_ex |                 |        | 
+                          |       |                         | f        | t       | entity_type                |                 |        | 
+                          |       |                         | f        | t       | menu                       |                 |        | 
+                          |       |                         | f        | t       | page_block_layout          |                 |        | 
+                          |       |                         | f        | t       | property_add               |                 |        | 
+                          |       |                         | f        | t       | projection_relation_ex     |                 |        | 
+                          |       |                         | f        | t       | property_type              |                 |        | 
+                          |       |                         | f        | t       | table_constraints          |                 |        | 
+                          |       |                         | f        | t       | reference                  |                 |        | 
+                          |       |                         | f        | t       | schema                     |                 |        | 
+                          |       |                         | f        | t       | table_relation             |                 |        | 
+                          |       |                         | f        | t       | user_list                  |                 |        | 
+                          |       |                         | f        | t       | view_entity                |                 |        | 
+                          |       |                         | f        | t       | view_page                  |                 |        | 
+                          |       |                         | f        | t       | view_page_block            |                 |        | 
+                          |       |                         | f        | t       | view_projection_buttons    |                 |        | 
+                          |       |                         | f        | t       | view_projection_entity     |                 |        | 
+                          |       |                         | f        | t       | view_projection_property   |                 |        | 
+                          |       |                         | f        | t       | view_projection_relation   |                 |        | 
+                          |       |                         | f        | t       | entity                     |                 |        | 
+                          |       |                         | f        | t       | functions                  |                 |        | 
+                          |       |                         | f        | t       | projection_entity          |                 |        | 
+                          |       |                         | f        | t       | projection_property        |                 |        | 
+                          |       |                         | f        | t       | projection_relation        |                 |        | 
+                          |       |                         | f        | t       | property                   |                 |        | 
+                          |       |                         | f        | t       | relation                   |                 |        | 
+                          |       |                         | f        | t       | entity_extra               |                 |        | 
+                          |       |                         | f        | t       | relation_add               |                 |        | 
+                          |       |                         | f        | t       | relation_extra             |                 |        | 
+                          |       |                         | f        | t       | projection_entity_extra    |                 |        | 
+                          |       |                         | f        | t       | projection_relation_extra  |                 |        | 
+                          |       |                         | f        | t       | page                       |                 |        | 
+                          |       |                         | f        | t       | page_block                 |                 |        | 
+                          |       |                         | f        | t       | pivot                      |                 |        | 
+                          |       |                         | f        | t       | projection_buttons         |                 |        | 
+                          |       |                         | f        | t       | projection_property_extra  |                 |        | 
+                          |       |                         | f        | t       | property_extra             |                 |        | 
+                          |       |                         | f        | t       | menu_item                  |                 |        | 
+                          |       |                         | f        | t       | projection_redirect        |                 |        | 
+(44 rows)
+
+ 
+SELECT * FROM  meta.property_type; 
+      type       |                 note                  
+-----------------+---------------------------------------
+ filedb          | Файл в базе
+ getFileForPrint | Файл для печати наряда
+ file            | Файл
+ invisible       | Скрытый
+ datetime        | Дата и время
+ money           | Денежный
+ ref_tree        | Ссылка на классификатор
+ breadcrumbs     | Хлебные крошки
+ titleLink       | Ссылка с названием (ссылка||название)
+ date            | Строка
+ button          | Кнопка
+ row_color       | Цвет строки
+ time            | Время
+ ref_link        | Ссылка (обычная)
+ caption         | Заголовок
+ string          | Строковые значения
+ progress        | Горизонтальный индикатор
+ bool            | Истина или ложь
+ ref             | Список
+ integer         | Целочисленное
+ parent_id       | Ссылка на родителя
+ text            | Форматированный текст
+ plain           | Текст без форматирования
+ address         | Адрес
+(24 rows)
+
+ 
+--SELECT * FROM  meta.table_constraints;
+ 
+SELECT * FROM  meta.reference;
+ entity | ref_entity | ref_key | column_name | constraint_name 
+--------+------------+---------+-------------+-----------------
+(0 rows)
+
+ 
+ 
+SELECT * FROM  meta.schema;
+ schema_name 
+-------------
+ meta
+ public
+(2 rows)
+
+ 
+SELECT * FROM  meta.table_relation; 
+       relation_entity        |             entity             |          title          |           key            | many |          constraint_name           
+------------------------------+--------------------------------+-------------------------+--------------------------+------+------------------------------------
+ meta.relation                | meta.relation_add              | relation                | relation_name            | t    | _many_meta.relation
+ meta.menu                    | meta.menu_item                 | menu                    | name                     | t    | _many_meta.menu
+ meta.view_page               | meta.page                      | view_page               | page_key                 | t    | _many_meta.view_page
+ meta.entity                  | meta.entity_extra              | entity                  | entity                   | t    | _many_meta.entity
+ meta.projection_entity       | meta.projection_entity_extra   | projection_entity       | projection_name          | t    | _many_meta.projection_entity
+ meta.projection_relation_ex  | meta.projection_relation_extra | projection_relation_ex  | projection_relation_name | t    | _many_meta.projection_relation_ex
+ meta.projection_property     | meta.projection_property_extra | projection_property     | projection_name          | t    | _many_meta.projection_property
+ meta.view_page_block         | meta.page_block                | view_page_block         | block_key                | t    | _many_meta.view_page_block
+ meta.property                | meta.pivot                     | property                | entity                   | t    | _many_meta.property
+ meta.view_projection_buttons | meta.projection_buttons        | view_projection_buttons | button                   | t    | _many_meta.view_projection_buttons
+ meta.projection_relation     | meta.projection_relation_extra | projection_relation     | projection_relation_name | t    | _many_meta.projection_relation
+(11 rows)
+
+ 
+SELECT * FROM  meta.user_list;
+       rolname        
+----------------------
+ postgres
+ pg_monitor
+ pg_read_all_settings
+ pg_read_all_stats
+ pg_stat_scan_tables
+ pg_signal_backend
+(6 rows)
+
+ 
+SELECT * FROM  meta.view_entity;
+ entity | title | primarykey | base_entity | table_type | ems_en | hint 
+--------+-------+------------+-------------+------------+--------+------
+(0 rows)
+
+ 
+SELECT * FROM  meta.view_page;
+ page_key | title 
+----------+-------
+(0 rows)
+
+ 
+ 
+ 
+ 
