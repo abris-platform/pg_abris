@@ -1502,10 +1502,15 @@ END;$$;
 CREATE FUNCTION meta.menu_item_insert_trgf() RETURNS trigger
     LANGUAGE plpgsql
     AS $$BEGIN
+ 
  IF new.name is null THEN
   new.name = new.projection;
  END IF;
-new.title  = (SELECT projection_entity.title FROM meta.projection_entity WHERE projection_entity.projection_name = new.projection);
+ 
+ IF new.title is null THEN
+   new.title  = coalesce((SELECT projection_entity.title FROM meta.projection_entity WHERE projection_entity.projection_name = new.projection), new.projection);
+ END IF;
+
  RETURN new;
 END;$$;
 
