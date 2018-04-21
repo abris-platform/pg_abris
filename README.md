@@ -1,4 +1,4 @@
-# pgabris
+# pg_abris
 
 ```
 makepkg -fci

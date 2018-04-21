@@ -1,5 +1,5 @@
 -- complain IF script is sourced IN psql, rather than via CREATE EXTENSION
-\echo Use "CREATE EXTENSION pgabris" to load this file. \quit
+\echo Use "CREATE EXTENSION pg_abris" to load this file. \quit
 
 CREATE SCHEMA meta;
 

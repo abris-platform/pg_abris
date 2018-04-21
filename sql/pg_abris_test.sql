@@ -1,4 +1,4 @@
-CREATE EXTENSION pgabris CASCADE;
+CREATE EXTENSION pg_abris CASCADE;
 
 SELECT title,
     primarykey,
