@@ -6,7 +6,6 @@ CREATE SCHEMA meta;
 CREATE TABLE meta.entity_extra (
     title text NOT NULL,
     primarykey text,
-    ems_en integer DEFAULT 0,
     entity text NOT NULL,
     base_entity text NOT NULL,
     hint text
@@ -19,7 +18,6 @@ CREATE TABLE meta.relation_add (
     title text,
     key character varying,
     "order" integer,
-    ems_en integer,
     hint text
 );
 
@@ -28,7 +26,6 @@ CREATE TABLE meta.relation_extra (
     ref_key text,
     relation_name text NOT NULL,
     "order" integer,
-    ems_en integer,
     hint text
 );
 
@@ -183,10 +180,10 @@ DECLARE
   t text;
   n text;
 BEGIN
-  execute ('SELECT title_column FROM meta.pivot WHERE entity = '''||entity||''' limit 1') into t;
-  execute ('SELECT num_column FROM meta.pivot WHERE entity = '''||entity||''' limit 1') into n;
-  execute ('SELECT entity_row FROM meta.pivot WHERE entity = '''||entity||''' limit 1') into e;
-  execute ('SELECT '||t||' FROM '||e||' WHERE ''c''||'||n||' = '''||"column"||'''  limit 1') into r;
+  execute ('SELECT title_column FROM meta.pivot WHERE entity = '''||entity||''' limit 1') INTO t;
+  execute ('SELECT num_column FROM meta.pivot WHERE entity = '''||entity||''' limit 1') INTO n;
+  execute ('SELECT entity_row FROM meta.pivot WHERE entity = '''||entity||''' limit 1') INTO e;
+  execute ('SELECT '||t||' FROM '||e||' WHERE ''c''||'||n||' = '''||"column"||'''  limit 1') INTO r;
   RETURN r; 
 END;$$;
 
@@ -204,10 +201,10 @@ DECLARE
   t text;
   n text;
 BEGIN
-  execute ('SELECT hint_column FROM meta.pivot WHERE entity = '''||entity||''' limit 1') into t;
-  execute ('SELECT num_column FROM meta.pivot WHERE entity = '''||entity||''' limit 1') into n;
-  execute ('SELECT entity_row FROM meta.pivot WHERE entity = '''||entity||''' limit 1') into e;
-  execute ('SELECT '||t||' FROM '||e||' WHERE ''c''||'||n||' = '''||"column"||'''  limit 1') into r;
+  execute ('SELECT hint_column FROM meta.pivot WHERE entity = '''||entity||''' limit 1') INTO t;
+  execute ('SELECT num_column FROM meta.pivot WHERE entity = '''||entity||''' limit 1') INTO n;
+  execute ('SELECT entity_row FROM meta.pivot WHERE entity = '''||entity||''' limit 1') INTO e;
+  execute ('SELECT '||t||' FROM '||e||' WHERE ''c''||'||n||' = '''||"column"||'''  limit 1') INTO r;
   RETURN r; 
 END;$$;
 
@@ -225,10 +222,10 @@ DECLARE
   t text;
   n text;
 BEGIN
-  execute ('SELECT hint_column FROM meta.pivot WHERE entity = '''||entity||''' limit 1') into t;
-  execute ('SELECT num_column FROM meta.pivot WHERE entity = '''||entity||''' limit 1') into n;
-  execute ('SELECT entity_row FROM meta.pivot WHERE entity = '''||entity||''' limit 1') into e;
-  execute ('SELECT '||n||' FROM '||e||' WHERE ''c''||'||n||' = '''||"column"||'''  limit 1') into r;
+  execute ('SELECT hint_column FROM meta.pivot WHERE entity = '''||entity||''' limit 1') INTO t;
+  execute ('SELECT num_column FROM meta.pivot WHERE entity = '''||entity||''' limit 1') INTO n;
+  execute ('SELECT entity_row FROM meta.pivot WHERE entity = '''||entity||''' limit 1') INTO e;
+  execute ('SELECT '||n||' FROM '||e||' WHERE ''c''||'||n||' = '''||"column"||'''  limit 1') INTO r;
   RETURN 100+r; 
 END;$$;
 
@@ -250,325 +247,148 @@ BEGIN
 END;$$;
 
 
-
-
-
-
-CREATE VIEW meta.entity AS
- SELECT (((n.nspname)::text || '.'::text) || (v.relname)::text) AS entity,
-    COALESCE(ee.title, (v.relname)::text) AS title,
+CREATE OR REPLACE VIEW meta.entity AS 
+ SELECT (n.nspname::text || '.'::text) || v.relname::text AS entity,
+    COALESCE(ee.title, v.relname::text) AS title,
     COALESCE(ee.primarykey, b.base_entity_key) AS primarykey,
     COALESCE(ee.base_entity, b.base_entity) AS base_entity,
-    (v.relkind)::information_schema.character_data AS table_type,
-    COALESCE(ee.ems_en, 0) AS ems_en,
+    v.relkind::information_schema.character_data AS table_type,
     ee.hint,
-    (pg_get_viewdef(v.oid))::information_schema.character_data AS view_definition,
+    pg_get_viewdef(v.oid)::information_schema.character_data AS view_definition,
     v.oid AS entity_id,
     b.base_entity_key,
     b.base_entity_id
-   FROM (((pg_class v
-     LEFT JOIN pg_namespace n ON ((n.oid = v.relnamespace)))
+   FROM pg_class v
+     LEFT JOIN pg_namespace n ON n.oid = v.relnamespace
      LEFT JOIN ( SELECT t.refobjid AS entity_id,
             t.obj AS base_entity_id,
-            (((ns.nspname)::text || '.'::text) || (n_1.relname)::text) AS base_entity,
-            (at.attname)::text AS base_entity_key
-           FROM ((((( SELECT DISTINCT dv.refobjid,
+            (ns.nspname::text || '.'::text) || n_1.relname::text AS base_entity,
+            at.attname::text AS base_entity_key
+           FROM ( SELECT DISTINCT dv.refobjid,
                     min(dt.refobjid) AS obj
-                   FROM (pg_depend dv
-                     JOIN pg_depend dt ON (((dv.objid = dt.objid) AND (dv.refobjid <> dt.refobjid) AND (dt.classid = ('pg_rewrite'::regclass)::oid) AND (dt.refclassid = ('pg_class'::regclass)::oid))))
-                  WHERE ((dv.refclassid = ('pg_class'::regclass)::oid) AND (dv.classid = ('pg_rewrite'::regclass)::oid) AND (dv.deptype = 'i'::"char"))
+                   FROM pg_depend dv
+                     JOIN pg_depend dt ON dv.objid = dt.objid AND dv.refobjid <> dt.refobjid AND dt.classid = 'pg_rewrite'::regclass::oid AND dt.refclassid = 'pg_class'::regclass::oid
+                  WHERE dv.refclassid = 'pg_class'::regclass::oid AND dv.classid = 'pg_rewrite'::regclass::oid AND dv.deptype = 'i'::"char"
                   GROUP BY dv.refobjid) t
-             JOIN pg_class n_1 ON (((n_1.oid = t.obj) AND (n_1.relkind = 'r'::"char"))))
-             LEFT JOIN pg_constraint c ON (((c.conrelid = n_1.oid) AND (c.contype = 'p'::"char"))))
-             LEFT JOIN pg_attribute at ON (((c.conkey[1] = at.attnum) AND (at.attrelid = c.conrelid))))
-             LEFT JOIN pg_namespace ns ON ((ns.oid = n_1.relnamespace)))) b ON ((v.oid = b.entity_id)))
-     LEFT JOIN meta.entity_extra ee ON ((ee.entity = (((n.nspname)::text || '.'::text) || (v.relname)::text))))
-  WHERE ((v.relkind = 'v'::"char") AND pg_has_role(v.oid, 'USAGE'::text) AND (n.nspname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])))
+             JOIN pg_class n_1 ON n_1.oid = t.obj AND n_1.relkind = 'r'::"char"
+             LEFT JOIN pg_constraint c ON c.conrelid = n_1.oid AND c.contype = 'p'::"char"
+             LEFT JOIN pg_attribute at ON c.conkey[1] = at.attnum AND at.attrelid = c.conrelid
+             LEFT JOIN pg_namespace ns ON ns.oid = n_1.relnamespace) b ON v.oid = b.entity_id
+     LEFT JOIN meta.entity_extra ee ON ee.entity = ((n.nspname::text || '.'::text) || v.relname::text)
+  WHERE 
+    (v.relkind = ANY (ARRAY['v'::"char"])) 
+    AND (pg_has_role(v.relowner, 'USAGE'::text) 
+      OR has_table_privilege(v.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER'::text) 
+      OR has_any_column_privilege(v.oid, 'SELECT, INSERT, UPDATE, REFERENCES'::text)) 
+    AND (n.nspname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name, 'meta'::text]))
 UNION ALL
- SELECT (((n.nspname)::text || '.'::text) || (r.relname)::text) AS entity,
-    COALESCE(ee.title, (r.relname)::text) AS title,
-    at.attname AS primarykey,
-    (((n.nspname)::text || '.'::text) || (r.relname)::text) AS base_entity,
-    (r.relkind)::information_schema.character_data AS table_type,
-    COALESCE(ee.ems_en, 0) AS ems_en,
+ SELECT n.nspname||'.'||r.relname                                         AS entity,
+    COALESCE(ee.title, COALESCE(obj_description(r.oid), r.relname::text)) AS title,
+    at.attname                                                            AS primarykey,
+    (n.nspname::text || '.'::text) || r.relname::text                     AS base_entity,
+    r.relkind::information_schema.character_data                          AS table_type,
     ee.hint,
-    (NULL::character varying)::information_schema.character_data AS view_definition,
-    r.oid AS entity_id,
-    NULL::name AS base_entity_key,
-    NULL::oid AS base_entity_id
-   FROM ((((pg_class r
-     LEFT JOIN pg_namespace n ON ((n.oid = r.relnamespace)))
-     LEFT JOIN pg_constraint c ON (((c.conrelid = r.oid) AND (c.contype = 'p'::"char"))))
-     LEFT JOIN pg_attribute at ON (((c.conkey[1] = at.attnum) AND (at.attrelid = c.conrelid))))
-     LEFT JOIN meta.entity_extra ee ON ((ee.entity = (((n.nspname)::text || '.'::text) || (r.relname)::text))))
-  WHERE ((r.relkind = 'r'::"char") AND pg_has_role(r.oid, 'USAGE'::text) AND (n.nspname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])));
+    NULL::character varying::information_schema.character_data            AS view_definition,
+    r.oid                                                                 AS entity_id,
+    NULL::name                                                            AS base_entity_key,
+    NULL::oid                                                             AS base_entity_id
+   FROM pg_class r
+     LEFT JOIN pg_namespace n ON n.oid = r.relnamespace
+     LEFT JOIN pg_constraint c ON c.conrelid = r.oid AND c.contype = 'p'::"char"
+     LEFT JOIN pg_attribute at ON c.conkey[1] = at.attnum AND at.attrelid = c.conrelid
+     LEFT JOIN meta.entity_extra ee ON ee.entity = ((n.nspname::text || '.'::text) || r.relname::text)
+  WHERE 
+    (r.relkind = ANY (ARRAY['r'::"char"])) 
+    AND (pg_has_role(r.relowner, 'USAGE'::text) 
+      OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER'::text) 
+      OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'::text)) 
+    AND (n.nspname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name, 'meta'::text]));
+
 
 
 CREATE VIEW meta.projection_entity AS
- SELECT COALESCE(projection_entity_extra.projection_name, meta.entity_to_table(entity.entity)) AS projection_name,
-    COALESCE(projection_entity_extra.entity, entity.entity) AS entity,
-    COALESCE(projection_entity_extra.title, entity.title) AS title,
-    COALESCE(projection_entity_extra.jump, COALESCE(projection_entity_extra.projection_name, meta.entity_to_table(entity.base_entity))) AS jump,
-    entity.primarykey,
-    projection_entity_extra.additional,
-    COALESCE(projection_entity_extra.readonly, (NOT has_table_privilege(entity.entity, 'insert, update, DELETE'::text))) AS readonly,
-    (0)::bigint AS amount_dup,
-    entity.base_entity,
-    projection_entity_extra.hint,
-    entity.ems_en
-   FROM (meta.entity
-     LEFT JOIN meta.projection_entity_extra ON ((projection_entity_extra.entity = entity.entity)))
-  WHERE (EXISTS ( SELECT projection_entity_extra_1.projection_name
-           FROM meta.projection_entity_extra projection_entity_extra_1
-          WHERE (projection_entity_extra_1.entity = entity.entity)))
+  SELECT 
+    COALESCE(pee.projection_name, meta.entity_to_table(entity.entity))                                AS projection_name,
+    COALESCE(pee.entity, entity.entity)                                                               AS entity,
+    COALESCE(pee.title, entity.title)                                                                 AS title,
+    COALESCE(pee.jump, COALESCE(pee.projection_name, meta.entity_to_table(entity.base_entity)))       AS jump,
+    entity.primarykey                                                                                 AS primarykey,
+    pee.additional                                                                                    AS additional,
+    COALESCE(pee.readonly, (NOT has_table_privilege(entity.entity, 'INSERT, UPDATE, DELETE'::text)))  AS readonly,
+    (0)::bigint                                                                                       AS amount_dup,
+    entity.base_entity                                                                                AS base_entity,
+    pee.hint                                                                                          AS hint
+  FROM (meta.entity
+     LEFT JOIN meta.projection_entity_extra pee ON ((pee.entity = entity.entity)))
+  WHERE (EXISTS ( SELECT pee1.projection_name
+           FROM meta.projection_entity_extra pee1
+          WHERE (pee1.entity = entity.entity)))
 UNION
- SELECT meta.entity_to_table(entity.entity) AS projection_name,
-    entity.entity,
-    entity.title,
-    meta.entity_to_table(entity.base_entity) AS jump,
-    entity.primarykey,
-    NULL::text AS additional,
-    (NOT has_table_privilege(entity.entity, 'insert, update, DELETE'::text)) AS readonly,
-    (0)::bigint AS amount_dup,
-    entity.base_entity,
-    entity.hint,
-    entity.ems_en
-   FROM meta.entity
-  WHERE (NOT (EXISTS ( SELECT projection_entity_extra.projection_name
+ SELECT meta.entity_to_table(entity.entity)                                                           AS projection_name,
+    entity.entity                                                                                     AS entity,
+    entity.title                                                                                      AS entity,
+    meta.entity_to_table(entity.base_entity)                                                          AS jump,
+    entity.primarykey                                                                                 AS primarykey,
+    NULL                                                                                              AS additional,
+    (NOT has_table_privilege(entity.entity, 'INSERT, UPDATE, DELETE'))                                AS readonly,
+    (0)::bigint                                                                                       AS amount_dup,
+    entity.base_entity                                                                                AS base_entity,
+    entity.hint                                                                                       AS hint  
+  FROM meta.entity
+  WHERE (NOT EXISTS ( SELECT projection_entity_extra.projection_name
            FROM meta.projection_entity_extra
-          WHERE (projection_entity_extra.projection_name = meta.entity_to_table(entity.entity)))));
+          WHERE (projection_entity_extra.projection_name = meta.entity_to_table(entity.entity))));
 
 
 
 
 
 CREATE VIEW meta.relation AS
- SELECT (((((((((nr.nspname)::text || '.'::text) || (r.relname)::text) || '.'::text) || (nc.nspname)::text) || '.'::text) || (e.relname)::text) || '.'::text) || (at.attname)::text) AS relation_name,
-    (((nc.nspname)::text || '.'::text) || (e.relname)::text) AS relation_entity,
-    (((nr.nspname)::text || '.'::text) || (r.relname)::text) AS entity,
-    COALESCE(re.title, (e.relname)::text) AS title,
-    (at.attname)::character varying AS key,
-    COALESCE(re."order", 0) AS "order",
-    COALESCE(re.ems_en, 0) AS ems_en,
-    re.hint
-   FROM ((((((pg_class e
-     JOIN pg_constraint c ON (((e.oid = c.conrelid) AND (c.contype = 'f'::"char"))))
-     JOIN pg_namespace nc ON ((e.relnamespace = nc.oid)))
-     LEFT JOIN pg_class r ON ((r.oid = c.confrelid)))
-     LEFT JOIN pg_namespace nr ON ((r.relnamespace = nr.oid)))
-     LEFT JOIN pg_attribute at ON (((c.conkey[1] = at.attnum) AND (at.attrelid = c.conrelid))))
-     LEFT JOIN meta.relation_extra re ON ((re.relation_name = (((((((((nr.nspname)::text || '.'::text) || (r.relname)::text) || '.'::text) 
-         || (nc.nspname)::text) || '.'::text) || (e.relname)::text) || '.'::text) || (at.attname)::text))))
+  SELECT 
+    nr.nspname||'.'||r.relname||'.'||nc.nspname||'.'||e.relname||'.'||at.attname  AS relation_name,
+    nc.nspname||'.'||e.relname                                                    AS relation_entity,
+    nr.nspname||'.'||r.relname                                                    AS entity,
+    COALESCE(re.title, e.relname)                                                 AS title,
+    (at.attname)::character varying                                               AS key,
+    COALESCE(re."order", 0)                                                       AS "order",
+    re.hint                                                                       AS hint
+   FROM pg_class e
+     JOIN pg_constraint c ON e.oid = c.conrelid AND c.contype = 'f'::"char"
+     JOIN pg_namespace nc ON e.relnamespace = nc.oid
+     LEFT JOIN pg_class r ON r.oid = c.confrelid
+     LEFT JOIN pg_namespace nr ON r.relnamespace = nr.oid
+     LEFT JOIN pg_attribute at ON c.conkey[1] = at.attnum AND at.attrelid = c.conrelid
+     LEFT JOIN meta.relation_extra re ON re.relation_name = nr.nspname||'.'||r.relname||'.'||nc.nspname||'.'||e.relname||'.'||at.attname
 UNION
- SELECT relation_add.relation_name,
+  SELECT 
+    relation_add.relation_name,
     relation_add.relation_entity,
     relation_add.entity,
     relation_add.title,
     relation_add.key,
     relation_add."order",
-    relation_add.ems_en,
     relation_add.hint
-   FROM meta.relation_add;
-
+  FROM meta.relation_add;
 
 CREATE VIEW meta.projection_relation AS
- SELECT ((projection_entity.projection_name || '.'::text) || relation.relation_name) AS projection_relation_name,
-    COALESCE(projection_relation_extra.title, relation.title) AS title,
+  SELECT 
+    ((projection_entity.projection_name || '.'::text) || relation.relation_name)                                AS projection_relation_name,
+    COALESCE(projection_relation_extra.title, relation.title)                                                   AS title,
     COALESCE(projection_relation_extra.related_projection_name, meta.entity_to_table(relation.relation_entity)) AS related_projection_name,
-    COALESCE(projection_relation_extra.readonly, false) AS readonly,
-    COALESCE(projection_relation_extra.visible, true) AS visible,
+    COALESCE(projection_relation_extra.readonly, false)                                                         AS readonly,
+    COALESCE(projection_relation_extra.visible, true)                                                           AS visible,
     projection_entity.projection_name,
     relation.relation_entity,
     relation.entity,
     relation.key,
-    COALESCE(projection_relation_extra.opened, false) AS opened,
-    COALESCE(projection_relation_extra."order", relation."order") AS "order",
+    COALESCE(projection_relation_extra.opened, false)                                                           AS opened,
+    COALESCE(projection_relation_extra."order", relation."order")                                               AS "order",
     projection_relation_extra.view_id,
     projection_relation_extra.hint
    FROM ((meta.projection_entity
      LEFT JOIN meta.relation ON ((relation.entity = projection_entity.entity)))
      LEFT JOIN meta.projection_relation_extra ON ((((projection_entity.projection_name || '.'::text) || relation.relation_name) = projection_relation_extra.projection_relation_name)))
   ORDER BY COALESCE(projection_relation_extra."order", relation."order");
-
-
-
-CREATE VIEW meta.tables AS
- SELECT tables.table_catalog,
-    (((tables.table_schema)::text || '.'::text) || (tables.table_name)::text) AS entity,
-    tables.table_type,
-    tables.self_referencing_column_name,
-    tables.reference_generation,
-    tables.user_defined_type_catalog,
-    tables.user_defined_type_schema,
-    tables.user_defined_type_name,
-    tables.is_insertable_into,
-    tables.is_typed,
-    tables.commit_action
-   FROM information_schema.tables
-  WHERE (((tables.table_schema)::text <> 'information_schema'::text) AND ((tables.table_schema)::text <> 'pg_catalog'::text));
-
-
-
-CREATE VIEW meta.base_entity AS
- SELECT tables.entity,
-    tables.entity AS base_entity,
-    entity.primarykey
-   FROM (meta.tables
-     LEFT JOIN meta.entity ON ((tables.entity = entity.entity)))
-  WHERE ((tables.table_type)::text = 'BASE TABLE'::text)
-UNION
- SELECT (((t2.view_schema)::text || '.'::text) || (t2.view_name)::text) AS entity,
-    (((t2.table_schema)::text || '.'::text) || (t2.table_name)::text) AS base_entity,
-    entity.primarykey
-   FROM (information_schema.view_table_usage t2
-     LEFT JOIN meta.entity ON (((((t2.table_schema)::text || '.'::text) || (t2.table_name)::text) = entity.entity)));
-
-
-
-CREATE VIEW meta.base_table AS
- SELECT entity.entity,
-    entity.title
-   FROM meta.entity
-  WHERE ((entity.table_type)::text = 'BASE TABLE'::text);
-
-CREATE VIEW meta.columns AS
- SELECT columns.table_catalog,
-    columns.table_schema,
-    columns.table_name,
-    (((columns.table_schema)::text || '.'::text) || (columns.table_name)::text) AS entity,
-    columns.column_name,
-    columns.ordinal_position,
-    columns.column_default,
-    columns.is_nullable,
-    columns.data_type,
-    columns.character_maximum_length,
-    columns.character_octet_length,
-    columns.numeric_precision,
-    columns.numeric_precision_radix,
-    columns.numeric_scale,
-    columns.datetime_precision,
-    columns.interval_type,
-    columns.interval_precision,
-    columns.character_set_catalog,
-    columns.character_set_schema,
-    columns.character_set_name,
-    columns.collation_catalog,
-    columns.collation_schema,
-    columns.collation_name,
-    columns.domain_catalog,
-    columns.domain_schema,
-    columns.domain_name,
-    columns.udt_catalog,
-    columns.udt_schema,
-    columns.udt_name,
-    columns.scope_catalog,
-    columns.scope_schema,
-    columns.scope_name,
-    columns.maximum_cardinality,
-    columns.dtd_identifier,
-    columns.is_self_referencing,
-    columns.is_identity,
-    columns.identity_generation,
-    columns.identity_start,
-    columns.identity_increment,
-    columns.identity_maximum,
-    columns.identity_minimum,
-    columns.identity_cycle,
-    columns.is_generated,
-    columns.generation_expression,
-    columns.is_updatable
-   FROM information_schema.columns
-  WHERE (((columns.table_schema)::text <> 'meta'::text) AND ((columns.table_schema)::text <> 'information_schema'::text) AND ((columns.table_schema)::text <> 'pg_catalog'::text));
-
-
-
-CREATE VIEW meta.constraint_column_usage AS
- SELECT (current_database())::information_schema.sql_identifier AS table_catalog,
-    (x.tblschema)::information_schema.sql_identifier AS table_schema,
-    (x.tblname)::information_schema.sql_identifier AS table_name,
-    (x.colname)::information_schema.sql_identifier AS column_name,
-    (current_database())::information_schema.sql_identifier AS constraint_catalog,
-    (x.cstrschema)::information_schema.sql_identifier AS constraint_schema,
-    (x.cstrname)::information_schema.sql_identifier AS constraint_name
-   FROM ( SELECT DISTINCT nr.nspname,
-            r.relname,
-            r.relowner,
-            a.attname,
-            nc.nspname,
-            c.conname
-           FROM pg_namespace nr,
-            pg_class r,
-            pg_attribute a,
-            pg_depend d,
-            pg_namespace nc,
-            pg_constraint c
-          WHERE ((nr.oid = r.relnamespace) AND (r.oid = a.attrelid) AND (d.refclassid = ('pg_class'::regclass)::oid) AND (d.refobjid = r.oid) AND (d.refobjsubid = a.attnum) AND (d.classid = ('pg_constraint'::regclass)::oid) AND (d.objid = c.oid) AND (c.connamespace = nc.oid) AND (c.contype = 'c'::"char") AND (r.relkind = 'r'::"char") AND (NOT a.attisdropped))
-        UNION ALL
-         SELECT nr.nspname,
-            r.relname,
-            r.relowner,
-            a.attname,
-            nc.nspname,
-            c.conname
-           FROM pg_namespace nr,
-            pg_class r,
-            pg_attribute a,
-            pg_namespace nc,
-            pg_constraint c
-          WHERE ((nr.oid = r.relnamespace) AND (r.oid = a.attrelid) AND (nc.oid = c.connamespace) AND
-                CASE
-                    WHEN (c.contype = 'f'::"char") THEN ((r.oid = c.confrelid) AND (a.attnum = ANY (c.confkey)))
-                    ELSE ((r.oid = c.conrelid) AND (a.attnum = ANY (c.conkey)))
-                END AND (NOT a.attisdropped) AND (c.contype = ANY (ARRAY['p'::"char", 'u'::"char", 'f'::"char"])) AND (r.relkind = 'r'::"char"))) x(tblschema, tblname, tblowner, colname, cstrschema, cstrname);
-
-
-CREATE VIEW meta.constraint_column_usage_ex AS
- SELECT (current_database())::information_schema.sql_identifier AS table_catalog,
-    (x.tblschema)::information_schema.sql_identifier AS table_schema,
-    (x.tblname)::information_schema.sql_identifier AS table_name,
-    (x.contblschema)::information_schema.sql_identifier AS constraint_table_schema,
-    (x.contblname)::information_schema.sql_identifier AS constraint_table_name,
-    (x.colname)::information_schema.sql_identifier AS column_name,
-    (current_database())::information_schema.sql_identifier AS constraint_catalog,
-    (x.cstrschema)::information_schema.sql_identifier AS constraint_schema,
-    (x.cstrname)::information_schema.sql_identifier AS constraint_name
-   FROM ( SELECT DISTINCT nr.nspname,
-            r.relname,
-            r.relowner,
-            a.attname,
-            nc.nspname,
-            c.conname,
-            NULL::text AS text,
-            NULL::text AS text
-           FROM pg_namespace nr,
-            pg_class r,
-            pg_attribute a,
-            pg_depend d,
-            pg_namespace nc,
-            pg_constraint c
-          WHERE ((nr.oid = r.relnamespace) AND (r.oid = a.attrelid) AND (d.refclassid = ('pg_class'::regclass)::oid) AND (d.refobjid = r.oid) AND (d.refobjsubid = a.attnum) AND (d.classid = ('pg_constraint'::regclass)::oid) AND (d.objid = c.oid) AND (c.connamespace = nc.oid) AND (c.contype = 'c'::"char") AND (r.relkind = 'r'::"char") AND (NOT a.attisdropped))
-        UNION ALL
-         SELECT nr.nspname,
-            r.relname,
-            r.relowner,
-            a.attname,
-            nc.nspname,
-            c.conname,
-            cnr.nspname,
-            cr.relname
-           FROM pg_namespace nr,
-            pg_class r,
-            pg_attribute a,
-            pg_namespace nc,
-            pg_constraint c,
-            pg_namespace cnr,
-            pg_class cr
-          WHERE ((nr.oid = r.relnamespace) AND (r.oid = a.attrelid) AND (nc.oid = c.connamespace) AND
-                CASE
-                    WHEN (c.contype = 'f'::"char") THEN ((r.oid = c.confrelid) AND (a.attnum = ANY (c.confkey)))
-                    ELSE ((r.oid = c.conrelid) AND (a.attnum = ANY (c.conkey)))
-                END AND (NOT a.attisdropped) AND (c.contype = ANY (ARRAY['p'::"char", 'u'::"char", 'f'::"char"])) AND (r.relkind = 'r'::"char") AND (cnr.oid = cr.relnamespace) AND (c.conrelid = cr.oid) AND (c.contype <> ALL (ARRAY['t'::"char", 'x'::"char"])) AND (cr.relkind = 'r'::"char") AND (NOT pg_is_other_temp_schema(nr.oid)) AND (pg_has_role(cr.relowner, 'USAGE'::text) OR has_table_privilege(cr.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER'::text) OR has_any_column_privilege(cr.oid, 'SELECT, INSERT, UPDATE, REFERENCES'::text)))) x(tblschema, tblname, tblowner, colname, cstrschema, cstrname, contblschema, contblname);
-
 
 
 
@@ -587,73 +407,41 @@ CREATE VIEW meta.functions AS
     (((n.nspname)::text || '.'::text) || (p.proname)::text) AS function_key
    FROM (pg_namespace n
      JOIN pg_proc p ON ((p.pronamespace = n.oid)))
-  WHERE ((n.nspname <> 'information_schema'::name) AND (n.nspname <> 'pg_catalog'::name));
-
-
-/*
-CREATE VIEW meta.grants AS
-  SELECT ((entity.entity || '.'::text) || (groups.groname)::text) AS key,
-    entity.entity,
-    groups.groname,
-    COALESCE(( 
-      SELECT true AS bool
-        FROM information_schema.role_table_grants
-        WHERE (((((role_table_grants.table_schema)::text || '.'::text) || (role_table_grants.table_name)::text) = entity.entity) 
-          AND ((role_table_grants.grantee)::name = groups.groname) 
-          AND ((role_table_grants.privilege_type)::text = 'INSERT'::text))), false) AS insert,
-    COALESCE(( 
-      SELECT true AS bool
-        FROM information_schema.role_table_grants
-        WHERE (((((role_table_grants.table_schema)::text || '.'::text) || (role_table_grants.table_name)::text) = entity.entity) 
-          AND ((role_table_grants.grantee)::name = groups.groname) 
-          AND ((role_table_grants.privilege_type)::text = 'SELECT'::text))), false) AS "SELECT",
-    COALESCE(( 
-      SELECT true AS bool
-        FROM information_schema.role_table_grants
-        WHERE (((((role_table_grants.table_schema)::text || '.'::text) || (role_table_grants.table_name)::text) = entity.entity) 
-          AND ((role_table_grants.grantee)::name = groups.groname) 
-          AND ((role_table_grants.privilege_type)::text = 'DELETE'::text))), false) AS DELETE,
-    COALESCE(( 
-      SELECT true AS bool
-        FROM information_schema.role_table_grants
-        WHERE (((((role_table_grants.table_schema)::text || '.'::text) || (role_table_grants.table_name)::text) = entity.entity) 
-          AND ((role_table_grants.grantee)::name = groups.groname) 
-          AND ((role_table_grants.privilege_type)::text = 'UPDATE'::text))), false) AS update
-  FROM meta.entity,
-    system.groups;
-*/
+  WHERE n.nspname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name, 'meta'::name]);
 
 
 CREATE VIEW meta.menu AS
- WITH RECURSIVE temp1(name, parent, title, projection, view_id, role, path, level, iconclass) AS (
-         SELECT t1.name,
-            t1.parent,
-            t1.title,
-            t1.projection,
-            t1.view_id,
-            t1.role,
-            (to_char(t1."order", '000'::text) || t1.name) AS path,
-            1,
-            t1.iconclass,
-            t1.style,
-            t1.key
-           FROM meta.menu_item t1
-          WHERE (t1.parent IS NULL)
-        UNION
-         SELECT t2.name,
-            t2.parent,
-            t2.title,
-            t2.projection,
-            t2.view_id,
-            t2.role,
-            (((temp1_1.path || '->'::text) || to_char(t2."order", '000'::text)) || t2.name) AS "varchar",
-            (temp1_1.level + 1),
-            t2.iconclass,
-            t2.style,
-            t2.key
-           FROM (meta.menu_item t2
-             JOIN temp1 temp1_1 ON ((temp1_1.name = t2.parent)))
-        )
+  WITH RECURSIVE temp1(name, parent, title, projection, view_id, role, path, level, iconclass) AS (
+    SELECT 
+      t1.name,
+      t1.parent,
+      t1.title,
+      t1.projection,
+      t1.view_id,
+      t1.role,
+      (to_char(t1."order", '000'::text) || t1.name) AS path,
+      1,
+      t1.iconclass,
+      t1.style,
+      t1.key
+    FROM meta.menu_item t1
+      WHERE (t1.parent IS NULL)
+    UNION
+    SELECT 
+      t2.name,
+      t2.parent,
+      t2.title,
+      t2.projection,
+      t2.view_id,
+      t2.role,
+      (((temp1_1.path || '->'::text) || to_char(t2."order", '000'::text)) || t2.name) AS "varchar",
+      (temp1_1.level + 1),
+      t2.iconclass,
+      t2.style,
+      t2.key
+    FROM (meta.menu_item t2
+      JOIN temp1 temp1_1 ON ((temp1_1.name = t2.parent)))
+  )
  SELECT temp1.name,
     temp1.parent,
     temp1.title,
@@ -702,136 +490,116 @@ UNION
 
 
 
-CREATE VIEW meta.property AS
- SELECT (((c.relname)::text || '.'::text) || (a.attname)::text) AS property_name,
-    (((nc.nspname)::text || '.'::text) || (c.relname)::text) AS entity,
+
+CREATE OR REPLACE VIEW meta.property AS 
+ SELECT (c.relname::text || '.'::text) || a.attname::text AS property_name,
+    (nc.nspname::text || '.'::text) || c.relname::text AS entity,
     COALESCE(pe.visible, true) AS visible,
     COALESCE(pe.readonly,
         CASE
-            WHEN ((c.relkind = ANY (ARRAY['f'::"char", 'p'::"char"])) OR ((c.relkind = ANY (ARRAY['v'::"char", 'r'::"char"])) AND (NOT pg_column_is_updatable((c.oid)::regclass, a.attnum, false)))) THEN true
+            WHEN (c.relkind = ANY (ARRAY['f'::"char", 'p'::"char"])) OR (c.relkind = ANY (ARRAY['v'::"char", 'r'::"char"])) AND NOT pg_column_is_updatable(c.oid::regclass, a.attnum, false) THEN true
             ELSE false
         END) AS readonly,
     COALESCE(
         CASE
-            WHEN (co.conkey[1] IS NOT NULL) THEN 'ref'::text
-            WHEN (a.atttypid = (2950)::oid) THEN 'invisible'::text
+            WHEN co.conkey[1] IS NOT NULL THEN 'ref'::text
+            WHEN a.atttypid = 2950::oid THEN 'invisible'::text
             ELSE NULL::text
         END, COALESCE(pe.type, 'string'::text)) AS type,
-    COALESCE(pe.title,
+    COALESCE(pe.title, COALESCE(d.description, a.attname::text)) AS title,
         CASE
-            WHEN (pv.* IS NOT NULL) THEN meta.get_name_column(pv.entity, (a.attname)::text)
-            ELSE (a.attname)::text
-        END) AS title,
-    (
-        CASE
-            WHEN (t.typtype = 'd'::"char") THEN
+            WHEN t.typtype = 'd'::"char" THEN
             CASE
-                WHEN ((t.typelem <> (0)::oid) AND (t.typlen = '-1'::integer)) THEN 'ARRAY'::text
-                WHEN (nt.nspname = 'pg_catalog'::name) THEN format_type(a.atttypid, NULL::integer)
+                WHEN t.typelem <> 0::oid AND t.typlen = '-1'::integer THEN 'ARRAY'::text
+                WHEN nt.nspname = 'pg_catalog'::name THEN format_type(a.atttypid, NULL::integer)
                 ELSE 'USER-DEFINED'::text
             END
-            ELSE (
+            ELSE
             CASE
-                WHEN ((t.typelem <> (0)::oid) AND (t.typlen = '-1'::integer)) THEN 'ARRAY'::text
-                WHEN (nt.nspname = 'pg_catalog'::name) THEN format_type(a.atttypid, NULL::integer)
+                WHEN t.typelem <> 0::oid AND t.typlen = '-1'::integer THEN 'ARRAY'::text
+                WHEN nt.nspname = 'pg_catalog'::name THEN format_type(a.atttypid, NULL::integer)
                 ELSE 'USER-DEFINED'::text
             END ||
             CASE
-                WHEN (a.atttypmod = '-1'::integer) THEN ''::text
-                WHEN (a.atttypid = ANY (ARRAY[(1042)::oid, (1043)::oid])) THEN (('('::text || (a.atttypmod - 4)) || ')'::text)
-                WHEN (a.atttypid = ANY (ARRAY[(1560)::oid, (1562)::oid])) THEN (('('::text || a.atttypmod) || ')'::text)
+                WHEN a.atttypmod = '-1'::integer THEN ''::text
+                WHEN a.atttypid = ANY (ARRAY[1042::oid, 1043::oid]) THEN ('('::text || (a.atttypmod - 4)) || ')'::text
+                WHEN a.atttypid = ANY (ARRAY[1560::oid, 1562::oid]) THEN ('('::text || a.atttypmod) || ')'::text
                 ELSE ''::text
-            END)
-        END)::information_schema.character_data AS data_type,
-    COALESCE(pe.ref_entity, (((nr.nspname)::text || '.'::text) || (r.relname)::text)) AS ref_entity,
-    (a.attname)::text AS column_name,
-    (COALESCE(pe.ref_key, (at.attname)::text))::information_schema.sql_identifier AS ref_key,
+            END
+        END::information_schema.character_data AS data_type,
+    COALESCE(pe.ref_entity, (nr.nspname::text || '.'::text) || r.relname::text) AS ref_entity,
+    a.attname::text AS column_name,
+    COALESCE(pe.ref_key, at.attname::information_schema.sql_identifier::text)::information_schema.sql_identifier AS ref_key,
     pe.ref_filter,
     pe.link_key,
-    COALESCE(pe."order",
-        CASE
-            WHEN (pv.* IS NOT NULL) THEN meta.get_order_column(pv.entity, (a.attname)::text)
-            ELSE 999
-        END) AS "order",
-    COALESCE(pe.hint,
-        CASE
-            WHEN (pv.* IS NOT NULL) THEN meta.get_hint_column(pv.entity, (a.attname)::text)
-            ELSE NULL::text
-        END) AS hint,
-    (co.conname)::information_schema.sql_identifier AS constraint_name,
-    (NOT (a.attnotnull OR ((t.typtype = 'd'::"char") AND t.typnotnull))) AS is_nullable,
+    COALESCE(pe."order", a.attnum * 10) AS "order",
+    pe.hint,
+    co.conname::information_schema.sql_identifier AS constraint_name,
+    NOT (a.attnotnull OR t.typtype = 'd'::"char" AND t.typnotnull) AS is_nullable,
     pg_get_expr(ad.adbin, ad.adrelid) AS "default",
     pe.pattern
-   FROM ((((((pg_attribute a
-     LEFT JOIN pg_attrdef ad ON (((a.attrelid = ad.adrelid) AND (a.attnum = ad.adnum))))
+   FROM pg_attribute a
+     LEFT JOIN pg_attrdef ad ON a.attrelid = ad.adrelid AND a.attnum = ad.adnum
      JOIN (pg_class c
-     JOIN pg_namespace nc ON ((c.relnamespace = nc.oid))) ON ((a.attrelid = c.oid)))
+     JOIN pg_namespace nc ON c.relnamespace = nc.oid) ON a.attrelid = c.oid
      JOIN (pg_type t
-     JOIN pg_namespace nt ON ((t.typnamespace = nt.oid))) ON ((a.atttypid = t.oid)))
-     LEFT JOIN meta.property_extra pe ON ((((((nc.nspname)::text || '.'::text) || (c.relname)::text) = pe.entity) AND ((a.attname)::text = pe.column_name))))
+     JOIN pg_namespace nt ON t.typnamespace = nt.oid) ON a.atttypid = t.oid
+     LEFT JOIN meta.property_extra pe ON ((nc.nspname::text || '.'::text) || c.relname::text) = pe.entity AND a.attname::text = pe.column_name
      LEFT JOIN (pg_constraint co
-      JOIN ((pg_class r
-       LEFT JOIN pg_namespace nr ON ((r.relnamespace = nr.oid)))
+     JOIN (pg_class r
+     LEFT JOIN pg_namespace nr ON r.relnamespace = nr.oid
      JOIN (pg_constraint cr
-       JOIN pg_attribute at ON (((cr.conkey[1] = at.attnum) 
-          AND (at.attrelid = cr.conrelid)))) ON (((r.oid = cr.conrelid) 
-          AND (cr.contype = 'p'::"char")))) ON ((r.oid = co.confrelid))) ON (((c.oid = co.conrelid) 
-          AND (co.contype = 'f'::"char") 
-          AND (a.attnum = co.conkey[1]))))
-     LEFT JOIN meta.pivot pv ON ((pv.entity = (((nc.nspname)::text || '.'::text) || (c.relname)::text))))
-    WHERE ((a.attnum > 0) 
-     AND (NOT a.attisdropped) 
-     AND (c.relkind = ANY (ARRAY['r'::"char", 'v'::"char", 'f'::"char", 'p'::"char"])) 
-     AND (pg_has_role(c.relowner, 'USAGE'::text) OR has_column_privilege(c.oid, a.attnum, 'SELECT, INSERT, UPDATE, REFERENCES'::text)) 
-     AND (nc.nspname <> ALL (ARRAY['information_schema'::name, 'pg_catalog'::name, 'meta'::name])));
-
+     JOIN pg_attribute at ON cr.conkey[1] = at.attnum AND at.attrelid = cr.conrelid) ON r.oid = cr.conrelid AND cr.contype = 'p'::"char") ON r.oid = co.confrelid) ON c.oid = co.conrelid AND co.contype = 'f'::"char" AND a.attnum = co.conkey[1]
+     LEFT JOIN pg_description d ON a.attnum = d.objsubid AND a.attrelid = d.objoid
+  WHERE a.attnum > 0 AND NOT a.attisdropped AND (c.relkind = ANY (ARRAY['r'::"char", 'v'::"char", 'f'::"char", 'p'::"char"])) AND (pg_has_role(c.relowner, 'USAGE'::text) OR has_column_privilege(c.oid, a.attnum, 'SELECT, INSERT, UPDATE, REFERENCES'::text)) AND (nc.nspname <> ALL (ARRAY['information_schema'::name, 'pg_catalog'::name, 'meta'::name]));
 
 
 CREATE VIEW meta.property_add AS
- SELECT ((((entity.base_entity || '.~'::text) || entity.entity) || '.~'::text) || (a.attname)::text) AS property_name,
-    entity.base_entity AS entity,
-    false AS visible,
-    true AS readonly,
-    'string'::text AS type,
-    (a.attname)::text AS title,
-    (
-        CASE
-            WHEN (t.typtype = 'd'::"char") THEN
+  SELECT 
+    entity.base_entity||'.~'||entity.entity||'.~'||a.attname  AS property_name,
+    entity.base_entity                                        AS entity,
+    false                                                     AS visible,
+    true                                                      AS readonly,
+    'string'::text                                            AS type,
+    (a.attname)::text                                         AS title,
+    ( CASE
+        WHEN (t.typtype = 'd'::"char") THEN
+          CASE
+            WHEN ((t.typelem <> (0)::oid) AND (t.typlen = '-1')) THEN 'ARRAY'
+            WHEN (nt.nspname = 'pg_catalog'::name) THEN format_type(a.atttypid, NULL)
+            ELSE 'USER-DEFINED'
+          END
+          ELSE (
             CASE
-                WHEN ((t.typelem <> (0)::oid) AND (t.typlen = '-1'::integer)) THEN 'ARRAY'::text
-                WHEN (nt.nspname = 'pg_catalog'::name) THEN format_type(a.atttypid, NULL::integer)
-                ELSE 'USER-DEFINED'::text
-            END
-            ELSE (
-            CASE
-                WHEN ((t.typelem <> (0)::oid) AND (t.typlen = '-1'::integer)) THEN 'ARRAY'::text
-                WHEN (nt.nspname = 'pg_catalog'::name) THEN format_type(a.atttypid, NULL::integer)
-                ELSE 'USER-DEFINED'::text
+              WHEN ((t.typelem <> (0)::oid) AND (t.typlen = '-1')) THEN 'ARRAY'
+              WHEN (nt.nspname = 'pg_catalog'::name) THEN format_type(a.atttypid, NULL)
+              ELSE 'USER-DEFINED'
             END ||
             CASE
-                WHEN (a.atttypmod = '-1'::integer) THEN ''::text
-                WHEN (a.atttypid = ANY (ARRAY[(1042)::oid, (1043)::oid])) THEN (('('::text || (a.atttypmod - 4)) || ')'::text)
-                WHEN (a.atttypid = ANY (ARRAY[(1560)::oid, (1562)::oid])) THEN (('('::text || a.atttypmod) || ')'::text)
-                ELSE ''::text
-            END)
-        END)::information_schema.character_data AS data_type,
-    entity.entity AS ref_entity,
-    ('~'::text || (a.attname)::text) AS column_name,
+              WHEN (a.atttypmod = '-1') THEN ''
+              WHEN (a.atttypid = ANY (ARRAY[(1042)::oid, (1043)::oid])) THEN (('(' || (a.atttypmod - 4)) || ')')
+              WHEN (a.atttypid = ANY (ARRAY[(1560)::oid, (1562)::oid])) THEN (('(' || a.atttypmod) || ')')
+              ELSE ''
+          END)
+      END
+    )::information_schema.character_data                        AS data_type,
+    entity.entity                                               AS ref_entity,
+    ('~'::text || (a.attname)::text)                            AS column_name,
     (entity.base_entity_key)::information_schema.sql_identifier AS ref_key,
-    NULL::text AS ref_filter,
-    NULL::text AS link_key,
-    999 AS "order",
-    true AS virtual,
-    (a.attname)::text AS original_column_name,
-    NULL::text AS hint,
-    NULL::text AS pattern,
-    false AS is_nullable,
-    NULL::text AS "default"
-   FROM ((meta.entity
-     JOIN pg_attribute a ON ((a.attrelid = entity.entity_id)))
-     JOIN (pg_type t
-     JOIN pg_namespace nt ON ((t.typnamespace = nt.oid))) ON ((a.atttypid = t.oid)))
-  WHERE ((a.attnum > 0) AND (NOT a.attisdropped) AND (entity.base_entity_id IS NOT NULL))
+    NULL::text                                                  AS ref_filter,
+    NULL::text                                                  AS link_key,
+    999                                                         AS "order",
+    true                                                        AS virtual,
+    (a.attname)::text                                           AS original_column_name,
+    NULL::text                                                  AS hint,
+    NULL::text                                                  AS pattern,
+    false                                                       AS is_nullable,
+    NULL::text                                                  AS "default"
+   FROM meta.entity
+     JOIN pg_attribute a ON a.attrelid = entity.entity_id
+     JOIN pg_type t
+      JOIN pg_namespace nt ON t.typnamespace = nt.oid ON a.atttypid = t.oid
+  WHERE a.attnum > 0 AND (NOT a.attisdropped) AND entity.base_entity_id IS NOT NULL AND entity.primarykey <> a.attname 
 UNION
  SELECT property.property_name,
     property.entity,
@@ -887,20 +655,21 @@ CREATE VIEW meta.projection_property AS
 
 
 CREATE VIEW meta.projection_relation_ex AS
- SELECT ((projection_entity.projection_name || '.'::text) || relation.relation_entity) AS projection_relation_name,
-    COALESCE((projection_relation_extra.title || '(*)'::text), relation.title) AS title,
-    COALESCE((projection_relation_extra.related_projection_name || '(*)'::text), relation.relation_entity) AS related_projection_name,
-    COALESCE(projection_relation_extra.readonly, false) AS readonly,
-    COALESCE(projection_relation_extra.visible, true) AS visible,
+  SELECT 
+    projection_entity.projection_name || '.'|| relation.relation_entity                               AS projection_relation_name,
+    COALESCE((projection_relation_extra.title || '(*)'), relation.title)                              AS title,
+    COALESCE((projection_relation_extra.related_projection_name || '(*)'), relation.relation_entity)  AS related_projection_name,
+    COALESCE(projection_relation_extra.readonly, false)                                               AS readonly,
+    COALESCE(projection_relation_extra.visible, true)                                                 AS visible,
     projection_entity.projection_name,
     relation.relation_entity,
     relation.entity,
     relation.key
-   FROM (((meta.projection_entity
-     LEFT JOIN meta.entity ON ((projection_entity.entity = entity.entity)))
-     LEFT JOIN meta.relation ON ((entity.base_entity = relation.entity)))
-     LEFT JOIN meta.projection_relation_extra ON (((relation.relation_entity = projection_relation_extra.relation_entity) 
-       AND (projection_entity.projection_name = projection_relation_extra.projection_name))));
+  FROM meta.projection_entity
+    LEFT JOIN meta.entity ON projection_entity.entity = entity.entity
+    LEFT JOIN meta.relation ON entity.base_entity = relation.entity
+    LEFT JOIN meta.projection_relation_extra ON relation.relation_entity = projection_relation_extra.relation_entity 
+      AND projection_entity.projection_name = projection_relation_extra.projection_name;
 
 
 
@@ -979,140 +748,12 @@ UNION
 
 
 
-CREATE VIEW meta.table_constraints AS
- SELECT (current_database())::information_schema.sql_identifier AS constraint_catalog,
-    (nc.nspname)::information_schema.sql_identifier AS constraint_schema,
-    (c.conname)::information_schema.sql_identifier AS constraint_name,
-    (current_database())::information_schema.sql_identifier AS table_catalog,
-    ((((nr.nspname)::information_schema.sql_identifier)::text || '.'::text) || ((r.relname)::information_schema.sql_identifier)::text) AS entity,
-    (
-        CASE c.contype
-            WHEN 'c'::"char" THEN 'CHECK'::text
-            WHEN 'f'::"char" THEN 'FOREIGN KEY'::text
-            WHEN 'p'::"char" THEN 'PRIMARY KEY'::text
-            WHEN 'u'::"char" THEN 'UNIQUE'::text
-            ELSE NULL::text
-        END)::information_schema.character_data AS constraint_type,
-    (
-        CASE
-            WHEN c.condeferrable THEN 'YES'::text
-            ELSE 'NO'::text
-        END)::information_schema.yes_or_no AS is_deferrable,
-    (
-        CASE
-            WHEN c.condeferred THEN 'YES'::text
-            ELSE 'NO'::text
-        END)::information_schema.yes_or_no AS initially_deferred
-   FROM pg_namespace nc,
-    pg_namespace nr,
-    pg_constraint c,
-    pg_class r
-  WHERE ((nc.oid = c.connamespace) 
-    AND (nr.oid = r.relnamespace) 
-    AND (c.conrelid = r.oid) 
-    AND (c.contype <> ALL (ARRAY['t'::"char", 'x'::"char"])) 
-    AND (r.relkind = 'r'::"char") 
-    AND (NOT pg_is_other_temp_schema(nr.oid)) 
-    AND (pg_has_role(r.relowner, 'USAGE'::text) 
-      OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER'::text) 
-      OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'::text)))
-UNION ALL
- SELECT (current_database())::information_schema.sql_identifier AS constraint_catalog,
-    (nr.nspname)::information_schema.sql_identifier AS constraint_schema,
-    (((((((nr.oid)::text || '_'::text) || (r.oid)::text) || '_'::text) || (a.attnum)::text) || '_not_null'::text))::information_schema.sql_identifier AS constraint_name,
-    (current_database())::information_schema.sql_identifier AS table_catalog,
-    ((((nr.nspname)::information_schema.sql_identifier)::text || '.'::text) || ((r.relname)::information_schema.sql_identifier)::text) AS entity,
-    ('CHECK'::character varying)::information_schema.character_data AS constraint_type,
-    ('NO'::character varying)::information_schema.yes_or_no AS is_deferrable,
-    ('NO'::character varying)::information_schema.yes_or_no AS initially_deferred
-   FROM pg_namespace nr,
-    pg_class r,
-    pg_attribute a
-  WHERE ((nr.oid = r.relnamespace) 
-    AND (r.oid = a.attrelid) 
-    AND a.attnotnull 
-    AND (a.attnum > 0) 
-    AND (NOT a.attisdropped) 
-    AND (r.relkind = 'r'::"char") 
-    AND (NOT pg_is_other_temp_schema(nr.oid)) 
-    AND (pg_has_role(r.relowner, 'USAGE'::text) 
-      OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER'::text) 
-      OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'::text)));
-
-
-
-CREATE VIEW meta.reference AS
-  SELECT (((key_column_usage.table_schema)::text || '.'::text) || (key_column_usage.table_name)::text) AS entity,
-    (((constraint_column_usage.table_schema)::text || '.'::text) || (constraint_column_usage.table_name)::text) AS ref_entity,
-    constraint_column_usage.column_name AS ref_key,
-    key_column_usage.column_name,
-    table_constraints.constraint_name
-  FROM meta.constraint_column_usage_ex constraint_column_usage,
-    meta.table_constraints,
-    information_schema.key_column_usage
-  WHERE (((table_constraints.constraint_name)::text = (constraint_column_usage.constraint_name)::text) 
-    AND ((table_constraints.constraint_schema)::text = (constraint_column_usage.constraint_schema)::text) 
-    AND (meta.entity_to_table(table_constraints.entity) = (constraint_column_usage.constraint_table_name)::text) 
-    AND (meta.entity_to_schema(table_constraints.entity) = (constraint_column_usage.constraint_table_schema)::text) 
-    AND ((key_column_usage.constraint_schema)::text = (table_constraints.constraint_schema)::text) 
-    AND ((key_column_usage.constraint_name)::text = (table_constraints.constraint_name)::text) 
-    AND ((key_column_usage.table_schema)::text = meta.entity_to_schema(table_constraints.entity)) 
-    AND ((key_column_usage.table_name)::text = meta.entity_to_table(table_constraints.entity)) 
-    AND ((table_constraints.constraint_type)::text = 'FOREIGN KEY'::text));
-
-
-
 CREATE VIEW meta.schema AS
  SELECT schemata.schema_name
    FROM information_schema.schemata
   WHERE ((schemata.schema_name)::text <> ALL (ARRAY[('pg_toast'::character varying)::text, ('pg_temp_1'::character varying)::text, ('pg_toast_temp_1'::character varying)::text, ('pg_catalog'::character varying)::text, ('information_schema'::character varying)::text]));
 
 
-
-CREATE VIEW meta.table_relation AS
- SELECT table_constraints.entity AS relation_entity,
-    (((constraint_column_usage.table_schema)::text || '.'::text) || (constraint_column_usage.table_name)::text) AS entity,
-    key_column_usage.table_name AS title,
-    key_column_usage.column_name AS key,
-    false AS many,
-    table_constraints.constraint_name
-   FROM ((meta.constraint_column_usage_ex constraint_column_usage
-     JOIN information_schema.key_column_usage ON ((((constraint_column_usage.constraint_schema)::text = (key_column_usage.constraint_schema)::text) 
-       AND ((constraint_column_usage.constraint_name)::text = (key_column_usage.constraint_name)::text) 
-       AND ((constraint_column_usage.constraint_table_schema)::text = (key_column_usage.table_schema)::text) 
-       AND ((constraint_column_usage.constraint_table_name)::text = (key_column_usage.table_name)::text))))
-     JOIN meta.table_constraints ON ((((table_constraints.constraint_schema)::text = (constraint_column_usage.constraint_schema)::text) 
-       AND ((table_constraints.constraint_name)::text = (constraint_column_usage.constraint_name)::text) 
-       AND ((constraint_column_usage.constraint_table_schema)::text = meta.entity_to_schema(table_constraints.entity)) 
-       AND ((constraint_column_usage.constraint_table_name)::text = meta.entity_to_table(table_constraints.entity)) 
-       AND ((table_constraints.constraint_type)::text = 'FOREIGN KEY'::text))))
-UNION
- SELECT table_constraints.entity AS relation_entity,
-    entity.entity,
-    key_column_usage.table_name AS title,
-    key_column_usage.column_name AS key,
-    false AS many,
-    table_constraints.constraint_name
-   FROM (((meta.constraint_column_usage
-     JOIN information_schema.key_column_usage ON ((((constraint_column_usage.constraint_catalog)::text = (key_column_usage.constraint_catalog)::text) 
-       AND ((constraint_column_usage.constraint_schema)::text = (key_column_usage.constraint_schema)::text) 
-       AND ((constraint_column_usage.constraint_name)::text = (key_column_usage.constraint_name)::text))))
-     JOIN meta.table_constraints ON ((((table_constraints.constraint_catalog)::text = (constraint_column_usage.constraint_catalog)::text) 
-       AND ((table_constraints.constraint_schema)::text = (constraint_column_usage.constraint_schema)::text) 
-       AND ((table_constraints.constraint_name)::text = (constraint_column_usage.constraint_name)::text) 
-       AND ((table_constraints.constraint_type)::text = 'FOREIGN KEY'::text))))
-     JOIN meta.entity_extra entity ON ((entity.base_entity = (((constraint_column_usage.table_schema)::text || '.'::text) || (constraint_column_usage.table_name)::text))))
-  WHERE (entity.base_entity <> entity.entity)
-UNION
- SELECT r.entity AS relation_entity,
-    e.entity,
-    r.title,
-    e.primarykey AS key,
-    true AS many,
-    ('_many_'::text || r.entity) AS constraint_name
-   FROM (meta.entity r
-     LEFT JOIN meta.entity e ON ((r.base_entity = e.entity)))
-  WHERE (r.entity <> r.base_entity);
 
 
 CREATE VIEW meta.user_list AS
@@ -1126,7 +767,6 @@ CREATE VIEW meta.view_entity AS
     entity.primarykey,
     entity.base_entity,
     entity.table_type,
-    entity.ems_en,
     entity.hint
    FROM meta.entity
   WHERE (meta.entity_to_schema(entity.entity) <> ALL (ARRAY['ems'::text, 'meta'::text]));
@@ -1205,8 +845,7 @@ CREATE VIEW meta.view_projection_entity AS
     projection_entity.primarykey,
     projection_entity.additional,
     projection_entity.readonly,
-    projection_entity.hint,
-    projection_entity.ems_en
+    projection_entity.hint
    FROM meta.projection_entity;
 
 
@@ -1300,8 +939,9 @@ BEGIN
     IF (new.view_definition is NOT null) THEN -- добавление представления
       new_view_definition = quote_ident(new.view_definition);
       EXECUTE ( 'CREATE OR REPLACE VIEW '||new_entity||' AS ' || new_view_definition );
-      insert into meta.entity_extra(entity, base_entity, title,  hint, primarykey) SELECT new_entity, base_entity.base_entity, new_title, new_hint, base_entity.primarykey 
-                                 FROM meta.base_entity WHERE base_entity.entity = new_entity limit 1;
+      --INSERT INTO meta.entity_extra(entity, base_entity, title,  hint, primarykey) 
+      --   SELECT new_entity, base_entity.base_entity, new_title, new_hint, base_entity.primarykey 
+      --                           FROM meta.base_entity WHERE base_entity.entity = new_entity limit 1;
     ELSE
       new_primarykey = quote_ident(new.primarykey);
       IF new_primarykey IS NULL THEN
@@ -1313,7 +953,7 @@ BEGIN
        CREATE TABLE '||new.entity||' ("'||name_key||'" uuid default uuid_generate_v4(), CONSTRAINT "'||
 		meta.entity_to_table(new.entity)||'_pkey"  PRIMARY KEY ("'||name_key||'"));'
 	 );
-     insert into meta.entity_extra(entity, base_entity, primarykey, title,  hint) SELECT new.entity, new.entity, name_key, new.title, new.hint;
+     INSERT INTO meta.entity_extra(entity, base_entity, primarykey, title,  hint) SELECT new.entity, new.entity, name_key, new.title, new.hint;
 
     END IF;
 
@@ -1331,70 +971,61 @@ BEGIN
 
 CREATE FUNCTION meta.entity_update_trgf() RETURNS trigger
     LANGUAGE plpgsql
-    AS $$DECLARE
+    AS 
+$$DECLARE
   new_title text;
-  new_ems_en text;
   new_hint text;
   new_entity text;
   new_primarykey text;
   new_base_entity text;
   new_view_definition text;
-
 BEGIN
-  
-  new_entity := quote_ident(new.entity);
+  new_entity = quote_ident(new.entity);
+  UPDATE meta.entity_extra set 
+    title = new.title,
+    primarykey = new.primarykey, 
+    hint = new.hint
+  WHERE entity_extra.entity = new.entity;
 
-   IF (old.table_type = 'BASE TABLE') THEN
+  IF (old.table_type = 'BASE TABLE') THEN
 
     new_title := quote_ident(new.title);
-    new_ems_en := quote_ident(new.ems_en);
     new_hint := quote_ident(new.hint);
-
-	   update meta.entity_extra set 
-	      title = new.title, 
-	      ems_en = new.ems_en,
-	      hint = new.hint
-	   WHERE entity_extra.entity = new.entity;
-   
-	   insert into meta.entity_extra(entity, title, base_entity, primarykey, ems_en, hint) SELECT new.entity, new.title, new.entity,
-	    coalesce(new.primarykey, (SELECT distinct primarykey FROM meta.base_entity WHERE entity = new.entity and base_entity = new.base_entity)), 
-	    new.ems_en, new.hint
-	     WHERE NOT exists (SELECT * FROM  meta.entity_extra WHERE entity_extra.entity = new.entity);
-    ELSE
+ 
+	  INSERT INTO meta.entity_extra(
+        entity, 
+        title, 
+        base_entity, 
+        primarykey, 
+        hint) 
+      SELECT 
+        new.entity, 
+        new.title, 
+        new.entity,
+	      new.primarykey, 
+        new.hint
+	    WHERE NOT exists (SELECT * FROM  meta.entity_extra WHERE entity_extra.entity = new.entity);
+  ELSE
     new_view_definition := quote_ident(new.view_definition);
-	   IF new.view_definition <> old.view_definition THEN
-	       EXECUTE ( 'CREATE OR REPLACE VIEW '||new.entity||' AS ' || new.view_definition );
+	  IF new.view_definition <> old.view_definition THEN
+	    EXECUTE ( 'CREATE OR REPLACE VIEW '||new.entity||' AS ' || new.view_definition );
+	  END IF;
 
-
-		     IF NOT EXISTS(SELECT base_entity.base_entity 
-						 FROM meta.base_entity WHERE base_entity.entity = new.entity AND base_entity.base_entity = new.base_entity) THEN
-						 
-			      SELECT base_entity.base_entity 
-						 FROM meta.base_entity WHERE base_entity.entity = new.entity into new.base_entity limit 1;
-		     END IF;
-	   END IF;
-
-   
-	   update meta.entity_extra set 
-	      title = new.title, 
-	      base_entity = new.base_entity, 
-	      primarykey = (SELECT distinct primarykey FROM meta.base_entity WHERE entity = new.entity and base_entity = new.base_entity),
-	      ems_en = new.ems_en,
-	      hint = new.hint
-	   WHERE entity_extra.entity = new.entity;
-   
-	   insert into meta.entity_extra(entity, title, base_entity, primarykey, hint) SELECT new.entity, new.title, new.base_entity,
-	    coalesce(new.primarykey, (SELECT distinct primarykey FROM meta.base_entity WHERE entity = new.entity and base_entity = new.base_entity)), new.hint
-	     WHERE NOT exists (SELECT * FROM  meta.entity_extra WHERE entity_extra.entity = new.entity);
-
+	  INSERT INTO meta.entity_extra(
+        entity, 
+        title, 
+        base_entity, 
+        primarykey, 
+        hint) 
+      SELECT 
+        new.entity, 
+        new.title, 
+        new.base_entity,
+	      new.primarykey,
+        new.hint
+	    WHERE NOT exists (SELECT * FROM  meta.entity_extra WHERE entity_extra.entity = new.entity);
 
    END IF;
-   IF new.ems_en <> old.ems_en THEN
-
-     perform ems.history_enable_for_table(new::meta.entity);
-   END IF;
-
-
  RETURN new;
 END;$$;
 
@@ -1458,9 +1089,9 @@ BEGIN
   new_entity := quote_ident(new.entity);
   new_groname := quote_ident(new.groname);
 
-   IF new.insert <> old.insert THEN
+   IF new.INSERT <> old.INSERT THEN
 
-     IF new.insert = true THEN
+     IF new.INSERT = true THEN
        execute ('GRANT INSERT ON TABLE '||new.entity||' TO '||new.groname);
      ELSE
        execute ('REVOKE INSERT ON TABLE '||new.entity||' FROM '||new.groname);
@@ -1527,7 +1158,7 @@ END;$$;
 CREATE FUNCTION meta.projection_entity_insert_trgf() RETURNS trigger
     LANGUAGE plpgsql
     AS $$BEGIN
- insert into meta.projection_entity_extra(projection_name, entity, title, additional, readonly, jump) SELECT new.projection_name, new.entity, new.title, new.additional, new.readonly, new.jump;
+ INSERT INTO meta.projection_entity_extra(projection_name, entity, title, additional, readonly, jump) SELECT new.projection_name, new.entity, new.title, new.additional, new.readonly, new.jump;
  RETURN new;
 END;$$;
 
@@ -1535,9 +1166,9 @@ END;$$;
 CREATE FUNCTION meta.projection_entity_update_trgf() RETURNS trigger
     LANGUAGE plpgsql
     AS $$BEGIN
- update meta.projection_entity_extra set title = new.title, jump = new.jump, additional = new.additional, readonly = new.readonly, hint = new.hint WHERE projection_entity_extra.projection_name = new.projection_name;
- update meta.entity set title = new.title, entity = new.entity, primarykey = new.primarykey WHERE meta.entity_to_table(entity.entity) = new.projection_name;
- insert into meta.projection_entity_extra(projection_name, entity, title , jump, additional, readonly, hint) SELECT new.projection_name, new.entity, new.title, new.jump, new.additional, new.readonly, new.hint WHERE NOT exists
+ UPDATE meta.projection_entity_extra set title = new.title, jump = new.jump, additional = new.additional, readonly = new.readonly, hint = new.hint WHERE projection_entity_extra.projection_name = new.projection_name;
+ UPDATE meta.entity set title = new.title, entity = new.entity, primarykey = new.primarykey WHERE meta.entity_to_table(entity.entity) = new.projection_name;
+ INSERT INTO meta.projection_entity_extra(projection_name, entity, title , jump, additional, readonly, hint) SELECT new.projection_name, new.entity, new.title, new.jump, new.additional, new.readonly, new.hint WHERE NOT exists
    (SELECT * FROM  meta.projection_entity_extra WHERE projection_entity_extra.projection_name = new.projection_name);
  RETURN new;
 END;$$;
@@ -1550,7 +1181,7 @@ CREATE FUNCTION meta.projection_property_update_trgf() RETURNS trigger
 DECLARE
 _temp text;
 BEGIN
- update meta.projection_property_extra set 
+ UPDATE meta.projection_property_extra set 
         title = new.title, 
   visible = new.visible, 
   readonly = new.readonly, 
@@ -1561,7 +1192,7 @@ BEGIN
   hint = new.hint
  WHERE projection_property_extra.projection_property_name = new.projection_property_name RETURNING projection_property_name INTO _temp;
 
---update meta.property set title = new.title,
+--UPDATE meta.property set title = new.title,
 --  visible = new.visible,
 --  readonly = new.readonly,
 --  type = new.type,
@@ -1573,7 +1204,7 @@ BEGIN
 -- WHERE column_name = new.column_name and entity IN (SELECT substring(entity, '\w*')||'.'||projection_name FROM meta.projection_entity WHERE projection_name = old.projection_name);
 
  IF _temp IS NULL THEN
- insert into meta.projection_property_extra(
+ INSERT INTO meta.projection_property_extra(
     projection_property_name, 
     projection_name, 
     column_name, 
@@ -1619,7 +1250,7 @@ CREATE FUNCTION meta.projection_relation_update_trgf() RETURNS trigger
 DECLARE
 _temp_title text;
 BEGIN
- update meta.projection_relation_extra set 
+ UPDATE meta.projection_relation_extra set 
     title = new.title, 
     visible = new.visible, 
     readonly = new.readonly, 
@@ -1630,13 +1261,13 @@ BEGIN
     hint = new.hint
   WHERE projection_relation_extra.projection_relation_name = new.projection_relation_name RETURNING title INTO _temp_title;
   
- --update meta.relation set
+ --UPDATE meta.relation set
  --   title = new.title,
  --   entity = new.entity,
  --   "order" = new."order"
  -- WHERE relation.relation_entity = new.relation_entity and relation.entity = new.projection_entity;
 IF _temp_title IS NULL THEN 
- insert into meta.projection_relation_extra(
+ INSERT INTO meta.projection_relation_extra(
    projection_relation_name,
    projection_name, 
    relation_entity, 
@@ -1698,13 +1329,13 @@ BEGIN
   new_ref_entity := quote_ident(new.ref_entity);
   
    IF new.ref_entity is NOT null THEN
-    SELECT primarykey FROM meta.entity WHERE entity = new.ref_entity into new.ref_key;
+    SELECT primarykey FROM meta.entity WHERE entity = new.ref_entity INTO new.ref_key;
     
     new_ref_key := quote_ident(new.ref_key);
     IF(new.column_name is null)THEN
         new.column_name := new.ref_key;
     END IF;
-    SELECT data_type FROM meta.property WHERE entity = new.ref_entity and column_name = new.ref_key into new.data_type;
+    SELECT data_type FROM meta.property WHERE entity = new.ref_entity and column_name = new.ref_key INTO new.data_type;
 
     new_data_type := quote_ident(new.data_type);
     new_column_name := quote_ident(new.column_name);
@@ -1717,7 +1348,7 @@ BEGIN
           ON UPDATE NO ACTION ON DELETE NO ACTION;');
     IF NOT EXISTS(SELECT * FROM meta.property_extra WHERE column_name  = new.column_name and entity = new.entity) 
       THEN
-     insert into meta.property_extra(entity, column_name, title, visible, readonly, type, ref_key, link_key, ref_entity, "order", hint, pattern) 
+     INSERT INTO meta.property_extra(entity, column_name, title, visible, readonly, type, ref_key, link_key, ref_entity, "order", hint, pattern) 
         SELECT new.entity, new.column_name, new.title, new.visible, new.readonly, new.type, new.ref_key, new.link_key, new.ref_entity, new."order", new.hint, new.pattern;
     END IF;
         
@@ -1726,7 +1357,7 @@ BEGIN
       new.data_type = 'text';
     END IF;
       EXECUTE 'ALTER TABLE '||new.entity||' add column '||new.column_name||'  '||new.data_type||'';
-      insert into meta.property_extra(entity, column_name, title, visible, readonly, type, "order", hint, pattern) 
+      INSERT INTO meta.property_extra(entity, column_name, title, visible, readonly, type, "order", hint, pattern) 
         SELECT new.entity, new.column_name, new.title, new.visible, new.readonly, new.type, new."order", new.hint, new.pattern;
   END IF;
   RETURN new;      
@@ -1762,7 +1393,7 @@ IF exists(SELECT * FROM meta.entity WHERE entity = new.entity and table_type = '
     END IF;
   END IF;
   IF new.ref_entity is NOT null and (old.ref_entity<>new.ref_entity or old.ref_entity is null) THEN
-  SELECT primarykey FROM meta.entity WHERE entity = new.ref_entity into new.ref_key;
+  SELECT primarykey FROM meta.entity WHERE entity = new.ref_entity INTO new.ref_key;
 
   --new_column_name := quote_ident(new.column_name);
   new_ref_entity := quote_ident(meta.entity_to_schema(new.ref_entity)) || '.' || quote_ident(meta.entity_to_table(new.ref_entity));
@@ -1783,7 +1414,7 @@ IF new.data_type <> old.data_type THEN
   EXECUTE 'alter table '||old_entity||' alter column '||old_column_name||' type '||new_data_type||' using ('||old_column_name||'::'||new_data_type||')       ';
 
 END IF;
- update meta.property_extra set 
+ UPDATE meta.property_extra set 
      title = new.title, 
      visible = new.visible, 
      readonly = new.readonly, 
@@ -1795,7 +1426,7 @@ END IF;
      hint = new.hint,
      pattern = new.pattern
    WHERE property_extra.entity = new.entity and property_extra.column_name = new.column_name ;
- insert into meta.property_extra(entity,  column_name, title, visible, readonly, type, ref_key, link_key, ref_entity, "order", hint, pattern) 
+ INSERT INTO meta.property_extra(entity,  column_name, title, visible, readonly, type, ref_key, link_key, ref_entity, "order", hint, pattern) 
     SELECT 
      old.entity,
      old.column_name,
@@ -1823,19 +1454,17 @@ CREATE FUNCTION meta.relation_update_trgf() RETURNS trigger
 DECLARE
 _temp text;
 BEGIN
- update meta.relation_extra set 
+ UPDATE meta.relation_extra set 
     title = new.title, 
     "order" = new.order,
-    ems_en = new.ems_en,
     hint = new.hint
 WHERE relation_extra.relation_name = new.relation_name RETURNING relation_name INTO _temp;
 
 IF _temp IS NULL THEN
- insert into meta.relation_extra(relation_name, title, ems_en, "order", hint) 
+ INSERT INTO meta.relation_extra(relation_name, title,  "order", hint) 
    SELECT
       new.entity||'.'||new.relation_entity||'.'||new.key as relation_name,
       new.title,
-      new.ems_en, 
       new.order,
       new.hint
     WHERE NOT exists
