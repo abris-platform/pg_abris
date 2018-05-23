@@ -8,7 +8,7 @@ CREATE TABLE table1 (
     CONSTRAINT table1_pkey PRIMARY KEY (KEY)
 );
 COMMENT ON COLUMN public.table1.row1 IS 'Строковое значение';
-COMMENT ON TABLE  public.table1      IS 'Тестовая таблица 1'
+COMMENT ON TABLE  public.table1      IS 'Тестовая таблица 1';
 
 CREATE TABLE table2 (
     key uuid NOT NULL,
@@ -19,7 +19,7 @@ CREATE TABLE table2 (
     CONSTRAINT table2_fkey FOREIGN KEY (row3) REFERENCES public.table1 (KEY)
 );
 COMMENT ON COLUMN public.table2.row1 IS 'Строковое значение';
-COMMENT ON TABLE  public.table1      IS 'Тестовая таблица 2'
+COMMENT ON TABLE  public.table2      IS 'Тестовая таблица 2';
 
 
 CREATE VIEW view_test1 AS
@@ -29,7 +29,17 @@ SELECT key, row2+2 as sum FROM table1;
 
 SELECT * FROM  meta.schema;
 
-SELECT title, primarykey, entity ,  base_entity     FROM meta.entity;
+SELECT 
+    entity,
+    title,
+    primarykey,
+    base_entity,
+    table_type,
+    hint,
+--    view_definition,
+    entity_id,
+    base_entity_key,
+    base_entity_id                                  FROM meta.entity;
 SELECT *                                            FROM meta.property; 
 SELECT *                                            FROM meta.relation; 
 SELECT *                                            FROM meta.projection_entity; 
