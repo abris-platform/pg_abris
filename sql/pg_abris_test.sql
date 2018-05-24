@@ -26,25 +26,30 @@ CREATE VIEW view_test1 AS
 SELECT key, row2+2 as sum FROM table1;
 
 
+INSERT INTO meta.entity (schema_name, table_name, title, primarykey) VALUES('public', 'test_Insert', 'Таблица через insert', 'id');
+
+INSERT INTO meta.property (entity_id, column_name)  VALUES((select entity_id from meta.entity where table_name = 'table1'), 'note');
+INSERT INTO meta.property (entity_id, ref_entity)   VALUES((select entity_id from meta.entity where table_name = 'test_insert'),
+                                                           (select entity_id from meta.entity where table_name = 'table1'));
+
+UPDATE meta.property SET title = 'Комментарий' WHERE property_name = (select entity_id from meta.entity where table_name = 'table1')||'.'|| 'note';
+
+INSERT INTO meta.entity (schema_name, table_name, title, view_definition) VALUES('public', 'view_insert', 'Представление через insert',
+    'select * from public.table2');
+
+
+UPDATE meta.entity SET view_definition = 'select *, 1 from public.table2' WHERE  table_name = 'view_insert';
+
+
 
 SELECT * FROM  meta.schema;
 
-SELECT 
-    entity,
-    title,
-    primarykey,
-    base_entity,
-    table_type,
-    hint,
---    view_definition,
-    entity_id,
-    base_entity_key,
-    base_entity_id                                  FROM meta.entity;
-SELECT *                                            FROM meta.property; 
-SELECT *                                            FROM meta.relation; 
-SELECT *                                            FROM meta.projection_entity; 
-SELECT *                                            FROM meta.projection_property;
-SELECT *                                            FROM meta.projection_relation; 
+SELECT * FROM meta.entity;
+SELECT * FROM meta.property; 
+SELECT * FROM meta.relation; 
+SELECT * FROM meta.projection_entity; 
+SELECT * FROM meta.projection_property;
+SELECT * FROM meta.projection_relation; 
 
 SELECT * FROM  meta.entity_type;
 SELECT * FROM  meta.property_type; 
