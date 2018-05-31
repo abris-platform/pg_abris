@@ -40,6 +40,9 @@ INSERT INTO meta.property (entity_id, ref_entity)   VALUES((select entity_id fro
                                                            (select entity_id from meta.entity where table_name = 'table1'));
 
 UPDATE meta.property SET title = 'Комментарий' WHERE property_name = (select entity_id from meta.entity where table_name = 'table1')||'.'|| 'note';
+
+
+
 UPDATE meta.property SET data_type  = 'text' WHERE property_name = (select entity_id from meta.entity where table_name = 'table1')||'.'|| 'note';
 
 INSERT INTO meta.entity (schema_name, table_name, title, view_definition) VALUES('public', 'view_insert', 'Представление через insert',
@@ -91,8 +94,14 @@ DELETE FROM meta.relation
 DELETE FROM meta.relation  
     WHERE relation_name = (select entity_id from meta.entity where table_name = 'table1')||'_'||  
      (select entity_id from meta.entity where table_name = 'test_insert');
-
-
+--
+--
 SELECT * FROM meta.relation;
- 
- 
+-- 
+--
+--
+-- 
+DELETE FROM meta.property  WHERE property_name = (select entity_id from meta.entity where table_name = 'table1')||'.'|| 'note';
+--
+--
+SELECT * FROM meta.property;

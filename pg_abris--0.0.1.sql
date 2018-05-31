@@ -988,63 +988,10 @@ END;$$;
 --  
 --
 --
-CREATE FUNCTION meta.property_insert_trgf() RETURNS trigger
+CREATE FUNCTION meta.property_trgf() RETURNS trigger
     LANGUAGE plpgsql
     AS 
 $$DECLARE
-  new_ref_key     TEXT;
-  new_data_type   TEXT;
-  new_column_name TEXT;
-  new_entity      TEXT;
-  new_ref_entity  TEXT;
-BEGIN
-  SELECT quote_ident(schema_name)||'.'||quote_ident(table_name) AS entity FROM meta.entity WHERE entity_id = new.entity_id  INTO new_entity;  
-  SELECT quote_ident(schema_name)||'.'||quote_ident(table_name) AS entity FROM meta.entity WHERE entity_id = new.ref_entity INTO new_ref_entity;  
-  
-  IF new.ref_entity IS NOT NULL THEN -- добавление ссылочного поля
-    SELECT primarykey FROM meta.entity WHERE entity_id = new.ref_entity INTO new.ref_key;
-    new_ref_key = quote_ident( new.ref_key );
-    IF new.column_name IS NULL THEN
-      new_column_name = quote_ident( new.ref_key );
-    ELSE  
-      new_column_name = quote_ident( new.column_name );
-    END IF;
-
-    SELECT data_type FROM meta.property WHERE entity_id = new.ref_entity and column_name = new.ref_key INTO new.data_type;
-    new_data_type := quote_ident(new.data_type);
-    new.type = 'ref';
-    EXECUTE('ALTER TABLE '||new_entity||' add column "'||new_column_name||'" '||new_data_type||';');
-    EXECUTE('ALTER TABLE '||new_entity||' 
-      ADD CONSTRAINT '||substring(new_entity, '\.(\w*)')||'_'||new_column_name||'_fkey FOREIGN KEY ("'||new_column_name||'")
-      REFERENCES '||new_ref_entity||' ('||new_ref_key||') MATCH SIMPLE
-      ON UPDATE NO ACTION ON DELETE NO ACTION;');
-  ELSE -- добавление обычного поля
-    IF new.data_type IS NULL THEN
-      new.data_type = 'text';
-    END IF;
-    EXECUTE 'ALTER TABLE '||new_entity||' add column '||new.column_name||'  '||new.data_type||'';
-  END IF;
-  IF new.title IS NOT NULL THEN -- Сохранение названия колонки
-    EXECUTE 'COMMENT ON COLUMN ' || new_entity || '.' ||new.column_name|| ' IS ''' ||  new.title || '''';
-  END IF;
-  INSERT INTO meta.property_extra(
-    property_name,
-    ref_key, 
-    ref_entity) 
-    SELECT 
-      new.entity_id ||'.'|| COALESCE(new_column_name, new.column_name), 
-      new.ref_key, 
-      new.ref_entity;
-  RETURN new;      
-END;$$;
---
---
---  
---
---
-CREATE FUNCTION meta.property_update_trgf() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$DECLARE
   old_entity          TEXT;
   old_constraint_name TEXT;
   old_column_name     TEXT;
@@ -1054,75 +1001,109 @@ CREATE FUNCTION meta.property_update_trgf() RETURNS trigger
   new_ref_key         TEXT;
   new_data_type       TEXT;
   new_property_name   TEXT;
+
 BEGIN
-  SELECT quote_ident(schema_name)||'.'||quote_ident(table_name) AS entity FROM meta.entity WHERE entity_id = old.entity_id  INTO old_entity;  
-  SELECT quote_ident(schema_name)||'.'||quote_ident(table_name) AS entity FROM meta.entity WHERE entity_id = new.entity_id  INTO new_entity;  
+  IF  TG_OP = 'DELETE' THEN 
+    SELECT quote_ident(schema_name)||'.'||quote_ident(table_name) AS entity FROM meta.entity WHERE entity_id = old.entity_id  INTO old_entity;
+    EXECUTE ('ALTER TABLE '||old_entity||' DROP COLUMN ' || quote_ident(old.column_name)); 
+    DELETE FROM meta.property_extra WHERE property_name = old.entity_id ||'.'|| old.column_name;
+    RETURN old;
+  END IF;   
 
-  old_constraint_name := quote_ident(old.constraint_name);
-  new_property_name = new.entity_id || '.' || new.column_name;
 
-  IF EXISTS ( SELECT * FROM meta.entity WHERE entity_id = new.entity_id AND table_type = 'r' ) THEN
-    IF old.ref_entity IS NOT NULL AND (old.ref_entity<>new.ref_entity OR new.ref_entity IS NULL) THEN
-      IF (old.constraint_name IS NOT NULL) THEN
-        EXECUTE('ALTER TABLE '||old_entity||' DROP CONSTRAINT  "'||old_constraint_name||'"');
-        new.ref_key = NULL;
+  IF  TG_OP = 'INSERT' THEN 
+    SELECT quote_ident(schema_name)||'.'||quote_ident(table_name) AS entity FROM meta.entity WHERE entity_id = new.entity_id  INTO new_entity;  
+    SELECT quote_ident(schema_name)||'.'||quote_ident(table_name) AS entity FROM meta.entity WHERE entity_id = new.ref_entity INTO new_ref_entity;  
+    IF new.ref_entity IS NOT NULL THEN -- добавление ссылочного поля
+      SELECT primarykey FROM meta.entity WHERE entity_id = new.ref_entity INTO new.ref_key;
+      new_ref_key = quote_ident( new.ref_key );
+      IF new.column_name IS NULL THEN
+        new_column_name = quote_ident( new.ref_key );
+      ELSE  
+        new_column_name = quote_ident( new.column_name );
+      END IF;
+
+      SELECT data_type FROM meta.property WHERE entity_id = new.ref_entity and column_name = new.ref_key INTO new.data_type;
+      new_data_type := quote_ident(new.data_type);
+      new.type = 'ref';
+      EXECUTE('ALTER TABLE '||new_entity||' add column "'||new_column_name||'" '||new_data_type||';');
+      EXECUTE('ALTER TABLE '||new_entity||' 
+        ADD CONSTRAINT '||substring(new_entity, '\.(\w*)')||'_'||new_column_name||'_fkey FOREIGN KEY ("'||new_column_name||'")
+        REFERENCES '||new_ref_entity||' ('||new_ref_key||') MATCH SIMPLE
+        ON UPDATE NO ACTION ON DELETE NO ACTION;');
+    ELSE -- добавление обычного поля
+      IF new.data_type IS NULL THEN
+        new.data_type = 'text';
+      END IF;
+      EXECUTE 'ALTER TABLE '||new_entity||' add column '||new.column_name||'  '||new.data_type||'';
+    END IF;
+    IF new.title IS NOT NULL THEN -- Сохранение названия колонки
+      EXECUTE 'COMMENT ON COLUMN ' || new_entity || '.' ||new.column_name|| ' IS ''' ||  new.title || '''';
+    END IF;
+    INSERT INTO meta.property_extra(
+      property_name,
+      ref_key, 
+      ref_entity) 
+      SELECT 
+        new.entity_id ||'.'|| COALESCE(new_column_name, new.column_name), 
+        new.ref_key, 
+        new.ref_entity;
+    RETURN new;
+  END IF;
+
+  IF  TG_OP = 'UPDATE' THEN 
+    SELECT quote_ident(schema_name)||'.'||quote_ident(table_name) AS entity FROM meta.entity WHERE entity_id = old.entity_id  INTO old_entity;  
+    SELECT quote_ident(schema_name)||'.'||quote_ident(table_name) AS entity FROM meta.entity WHERE entity_id = new.entity_id  INTO new_entity;  
+  
+    old_constraint_name := quote_ident(old.constraint_name);
+    new_property_name = new.entity_id || '.' || new.column_name;
+
+    IF EXISTS ( SELECT * FROM meta.entity WHERE entity_id = new.entity_id AND table_type = 'r' ) THEN
+      IF old.ref_entity IS NOT NULL AND (old.ref_entity<>new.ref_entity OR new.ref_entity IS NULL) THEN
+        IF (old.constraint_name IS NOT NULL) THEN
+          EXECUTE('ALTER TABLE '||old_entity||' DROP CONSTRAINT  "'||old_constraint_name||'"');
+          new.ref_key = NULL;
+        END IF;
+      END IF;
+      IF new.ref_entity IS NOT NULL AND (old.ref_entity<>new.ref_entity OR old.ref_entity IS NULL) THEN
+        SELECT primarykey FROM meta.entity WHERE entity = new.ref_entity INTO new_ref_key;
+        new_column_name := quote_ident(new.column_name);
+        new_ref_entity := quote_ident(meta.entity_to_schema(new.ref_entity)) || '.' || quote_ident(meta.entity_to_table(new.ref_entity::text));
+        new_entity := meta.entity_to_table(new.entity);
+        EXECUTE('ALTER TABLE '||old_entity||' ADD CONSTRAINT "'||new_entity||'_'||new.column_name||'_fkey" FOREIGN KEY ("'||new.column_name||'")
+          REFERENCES '||new_ref_entity||' ("'||new_ref_key||'") MATCH SIMPLE
+          ON UPDATE NO ACTION ON DELETE NO ACTION;');
       END IF;
     END IF;
-    IF new.ref_entity IS NOT NULL AND (old.ref_entity<>new.ref_entity OR old.ref_entity IS NULL) THEN
-      SELECT primarykey FROM meta.entity WHERE entity = new.ref_entity INTO new_ref_key;
-      new_column_name := quote_ident(new.column_name);
-      new_ref_entity := quote_ident(meta.entity_to_schema(new.ref_entity)) || '.' || quote_ident(meta.entity_to_table(new.ref_entity::text));
-      new_entity := meta.entity_to_table(new.entity);
-      EXECUTE('ALTER TABLE '||old_entity||' ADD CONSTRAINT "'||new_entity||'_'||new.column_name||'_fkey" FOREIGN KEY ("'||new.column_name||'")
-        REFERENCES '||new_ref_entity||' ("'||new_ref_key||'") MATCH SIMPLE
-        ON UPDATE NO ACTION ON DELETE NO ACTION;');
+    IF new.data_type <> old.data_type THEN
+      old_column_name = quote_ident(old.column_name);
+      new_data_type = quote_ident(new.data_type);
+      EXECUTE 'alter table '||old_entity||' alter column '||old_column_name||' type '||new_data_type||' using ('||old_column_name||'::'||new_data_type||')';
     END IF;
-  END IF;
-  IF new.data_type <> old.data_type THEN
-    old_column_name = quote_ident(old.column_name);
-    new_data_type = quote_ident(new.data_type);
-    EXECUTE 'alter table '||old_entity||' alter column '||old_column_name||' type '||new_data_type||' using ('||old_column_name||'::'||new_data_type||')';
-  END IF;
-  IF new.title <> old.title THEN -- Сохранение названия колонки
-    EXECUTE 'COMMENT ON COLUMN ' || new_entity || '.' ||new.column_name|| ' IS ''' ||  new.title || '''';
-  END IF;
-  UPDATE meta.property_extra set 
-      ref_key    = new.ref_key, 
-      ref_entity = new.ref_entity
-    WHERE property_extra.property_name = new_property_name;
-  INSERT INTO meta.property_extra(
-    property_name,
-    ref_key, 
-    ref_entity) 
-    SELECT 
-      new_property_name,
-      new.ref_key, 
-      new.ref_entity
-    WHERE NOT EXISTS
-      (SELECT * FROM  meta.property_extra WHERE property_extra.property_name = new_property_name);
-  RETURN new;   
+    IF new.title <> old.title THEN -- Сохранение названия колонки
+      EXECUTE 'COMMENT ON COLUMN ' || new_entity || '.' ||new.column_name|| ' IS ''' ||  new.title || '''';
+    END IF;
+    UPDATE meta.property_extra set 
+        ref_key    = new.ref_key, 
+        ref_entity = new.ref_entity
+      WHERE property_extra.property_name = new_property_name;
+    INSERT INTO meta.property_extra(
+      property_name,
+      ref_key, 
+      ref_entity) 
+      SELECT 
+        new_property_name,
+        new.ref_key, 
+        new.ref_entity
+      WHERE NOT EXISTS
+        (SELECT * FROM  meta.property_extra WHERE property_extra.property_name = new_property_name);
+    RETURN new;   
+  END IF;      
 END;$$;
 --
 --
---  
---
---
-CREATE FUNCTION meta.property_DELETE_trgf() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-  old_entity text;
-  old_column_name text;
-
-BEGIN
-  -- old_entity := quote_ident(old.entity);
-  -- old_column_name := quote_ident(old.column_name);
-
-  --   EXECUTE('ALTER TABLE '||old_entity||' drop column '||old_column_name);
-  --   EXECUTE('DELETE FROM meta.property_extra WHERE entity = '''||old_entity||'''');
-    
-  RETURN old;   
-END;$$;
+CREATE TRIGGER property_trg INSTEAD OF INSERT OR UPDATE OR DELETE 
+  ON meta.property FOR EACH ROW EXECUTE PROCEDURE meta.property_trgf();
 --
 --
 --  
@@ -1141,10 +1122,12 @@ BEGIN
       DELETE FROM meta.relation_extra WHERE relation_name = old.relation_name;  
     END IF;
     RETURN old;
-  END IF;   
+  END IF;
+
   IF (select count(*) from meta.property where entity_id = new.relation_entity and column_name = new.key) <> 1 THEN
     RAISE EXCEPTION 'Неверное имя ключа - %', new.key;
   END IF;
+
   IF  TG_OP = 'UPDATE' THEN 
     IF new.virtual <> old.virtual THEN
       RAISE EXCEPTION 'Тип зависимости поменять нельзя.';
@@ -1533,11 +1516,6 @@ CREATE TRIGGER projection_property_update_trg INSTEAD OF INSERT OR UPDATE ON met
 
 CREATE TRIGGER projection_redirect_trg BEFORE INSERT OR UPDATE ON meta.projection_redirect FOR EACH ROW EXECUTE PROCEDURE meta.projection_redirect();
 
-CREATE TRIGGER property_DELETE_trg INSTEAD OF DELETE ON meta.property FOR EACH ROW EXECUTE PROCEDURE meta.property_DELETE_trgf();
-
-CREATE TRIGGER property_insert_trg INSTEAD OF INSERT ON meta.property FOR EACH ROW EXECUTE PROCEDURE meta.property_insert_trgf();
-
-CREATE TRIGGER property_update_trg INSTEAD OF UPDATE ON meta.property FOR EACH ROW EXECUTE PROCEDURE meta.property_update_trgf();
 
 --
 --
