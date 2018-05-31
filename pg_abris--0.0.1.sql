@@ -250,8 +250,35 @@ UNION ALL
 --
 CREATE VIEW meta.property AS 
   SELECT 
-    c.oid ||'.'|| a.attname                                         AS property_name,
+    c.oid ||'_'|| a.attname                                         AS property_name,
+    a.attname::text                                                 AS column_name,
     c.oid                                                           AS entity_id,
+    COALESCE(
+        CASE
+            WHEN co.conkey[1] IS NOT NULL THEN 'ref'
+            WHEN a.atttypid = 2950::oid THEN 'invisible'
+            ELSE NULL::text
+        END, 'string')                                              AS type,
+    CASE
+      WHEN t.typtype = 'd' THEN
+        CASE
+            WHEN t.typelem <> 0 AND t.typlen = '-1' THEN 'ARRAY'
+            WHEN nt.nspname = 'pg_catalog'          THEN format_type(a.atttypid, NULL)
+                                                    ELSE 'USER-DEFINED'
+        END
+        ELSE
+        CASE
+            WHEN t.typelem <> 0 AND t.typlen = '-1' THEN 'ARRAY'
+            WHEN nt.nspname = 'pg_catalog'          THEN format_type(a.atttypid, NULL)
+                                                    ELSE 'USER-DEFINED'
+        END ||
+        CASE
+            WHEN a.atttypmod = '-1'                   THEN ''
+            WHEN a.atttypid = ANY (ARRAY[1042, 1043]) THEN '('||a.atttypmod-4||')'
+            WHEN a.atttypid = ANY (ARRAY[1560, 1562]) THEN '('||a.atttypmod|| ')'
+                                                      ELSE ''
+        END
+      END::information_schema.character_data                        AS data_type,
     true                                                            AS visible,
     CASE
       WHEN (c.relkind = ANY (ARRAY['f', 'p'])) 
@@ -260,35 +287,8 @@ CREATE VIEW meta.property AS
         THEN true
         ELSE false
     END                                                             AS readonly,
-    COALESCE(
-        CASE
-            WHEN co.conkey[1] IS NOT NULL THEN 'ref'
-            WHEN a.atttypid = 2950::oid THEN 'invisible'
-            ELSE NULL::text
-        END, 'string')                                              AS type,
     COALESCE(d.description, a.attname::text)                        AS title,
-      CASE
-        WHEN t.typtype = 'd' THEN
-          CASE
-              WHEN t.typelem <> 0 AND t.typlen = '-1' THEN 'ARRAY'
-              WHEN nt.nspname = 'pg_catalog'          THEN format_type(a.atttypid, NULL)
-                                                      ELSE 'USER-DEFINED'
-          END
-          ELSE
-          CASE
-              WHEN t.typelem <> 0 AND t.typlen = '-1' THEN 'ARRAY'
-              WHEN nt.nspname = 'pg_catalog'          THEN format_type(a.atttypid, NULL)
-                                                      ELSE 'USER-DEFINED'
-          END ||
-          CASE
-              WHEN a.atttypmod = '-1'                   THEN ''
-              WHEN a.atttypid = ANY (ARRAY[1042, 1043]) THEN '('||a.atttypmod-4||')'
-              WHEN a.atttypid = ANY (ARRAY[1560, 1562]) THEN '('||a.atttypmod|| ')'
-                                                        ELSE ''
-          END
-        END::information_schema.character_data                      AS data_type,
     COALESCE(pe.ref_entity, r.oid)                                  AS ref_entity,
-    a.attname::text                                                 AS column_name,
     COALESCE(pe.ref_key, at.attname::text)::text                    AS ref_key,
     a.attnum * 10                                                   AS "order",
     co.conname::information_schema.sql_identifier                   AS constraint_name,
@@ -981,7 +981,7 @@ BEGIN
   IF  TG_OP = 'DELETE' THEN 
     SELECT quote_ident(schema_name)||'.'||quote_ident(table_name) AS entity FROM meta.entity WHERE entity_id = old.entity_id  INTO old_entity;
     EXECUTE ('ALTER TABLE '||old_entity||' DROP COLUMN ' || quote_ident(old.column_name)); 
-    DELETE FROM meta.property_extra WHERE property_name = old.entity_id ||'.'|| old.column_name;
+    DELETE FROM meta.property_extra WHERE property_name = old.entity_id ||'_'|| old.column_name;
     RETURN old;
   END IF;   
 
@@ -1019,7 +1019,7 @@ BEGIN
       ref_key, 
       ref_entity) 
       SELECT 
-        new.entity_id ||'.'|| COALESCE(new_column_name, new.column_name), 
+        new.entity_id ||'_'|| COALESCE(new_column_name, new.column_name), 
         new.ref_key, 
         new.ref_entity;
     RETURN new;

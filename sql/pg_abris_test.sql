@@ -39,11 +39,11 @@ INSERT INTO meta.property (entity_id, column_name, title)
 INSERT INTO meta.property (entity_id, ref_entity)   VALUES((select entity_id from meta.entity where table_name = 'test_insert'),
                                                            (select entity_id from meta.entity where table_name = 'table1'));
 
-UPDATE meta.property SET title = 'Комментарий' WHERE property_name = (select entity_id from meta.entity where table_name = 'table1')||'.'|| 'note';
+UPDATE meta.property SET title = 'Комментарий' WHERE property_name = (select entity_id from meta.entity where table_name = 'table1')||'_'|| 'note';
 
 
 
-UPDATE meta.property SET data_type  = 'text' WHERE property_name = (select entity_id from meta.entity where table_name = 'table1')||'.'|| 'note';
+UPDATE meta.property SET data_type  = 'text' WHERE property_name = (select entity_id from meta.entity where table_name = 'table1')||'_'|| 'note';
 
 INSERT INTO meta.entity (schema_name, table_name, title, view_definition) VALUES('public', 'view_insert', 'Представление через insert',
     'select * from public.table2');
