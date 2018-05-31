@@ -866,25 +866,7 @@ CREATE VIEW meta.view_projection_relation AS
 --  
 --
 --
-CREATE FUNCTION meta.entity_DELETE_trgf() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$DECLARE
-   old_entity text;
-BEGIN
-  IF old.table_type = 'VIEW' THEN
-    EXECUTE('DROP VIEW '||old.schema_name||'.'||old.table_name||';');
-  ELSE
-    EXECUTE('DROP TABLE '||old.schema_name||'.'||old.table_name||';');
-  END IF;
-  PERFORM  meta.clean();  
-  RETURN new;
-END;$$;
---
---
---  
---
---
-CREATE FUNCTION meta.entity_insert_trgf() RETURNS trigger
+CREATE FUNCTION meta.entity_trgf() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
   DECLARE
@@ -893,96 +875,89 @@ CREATE FUNCTION meta.entity_insert_trgf() RETURNS trigger
     new_table_name      TEXT;
     new_entity          TEXT;
   BEGIN
---  
--- hint не устанавливается, поскольку он храниться в расширении, а сразу туда писать прблематично
-    IF new.schema_name IS NULL THEN
-      new_schema_name = 'public';
-    ELSE 
-      new_schema_name = quote_ident(lower(new.schema_name));
-      IF new_schema_name SIMILAR TO '[a-z][a-z,_,0-9]{0,62}' THEN
-        IF NOT EXISTS(SELECT schema_name FROM information_schema.schemata WHERE schema_name = new_schema_name) THEN
-          RAISE EXCEPTION 'Схемы - % не существует.', new_schema_name;
+    IF  TG_OP = 'DELETE' THEN 
+      IF old.table_type = 'VIEW' THEN
+        EXECUTE('DROP VIEW '||old.schema_name||'.'||old.table_name||';');
+      ELSE
+        EXECUTE('DROP TABLE '||old.schema_name||'.'||old.table_name||';');
+      END IF;
+      PERFORM  meta.clean();  
+      RETURN old;
+    END IF;
+    IF  TG_OP = 'INSERT' THEN 
+      IF new.schema_name IS NULL THEN
+        new_schema_name = 'public';
+      ELSE 
+        new_schema_name = quote_ident(lower(new.schema_name));
+        IF new_schema_name SIMILAR TO '[a-z][a-z,_,0-9]{0,62}' THEN
+          IF NOT EXISTS(SELECT schema_name FROM information_schema.schemata WHERE schema_name = new_schema_name) THEN
+            RAISE EXCEPTION 'Схемы - % не существует.', new_schema_name;
+            RETURN new;
+          END IF;
+        ELSE
+          RAISE EXCEPTION 'Некорректное имя схемы - %.', new_schema_name;
           RETURN new;
         END IF;
+      END IF;     
+      new_table_name  = quote_ident(lower(new.table_name)); 
+      IF new_table_name SIMILAR TO '[a-z][a-z,_,0-9]{0,62}' THEN
+        new_entity = new_schema_name||'.'||new_table_name;
       ELSE
-        RAISE EXCEPTION 'Некорректное имя схемы - %.', new_schema_name;
+        RAISE EXCEPTION 'Некорректное имя таблицы - %.', new_table_name;
         RETURN new;
       END IF;
-    END IF;     
-    new_table_name  = quote_ident(lower(new.table_name)); 
-    IF new_table_name SIMILAR TO '[a-z][a-z,_,0-9]{0,62}' THEN
-      new_entity = new_schema_name||'.'||new_table_name;
-    ELSE
-      RAISE EXCEPTION 'Некорректное имя таблицы - %.', new_table_name;
-      RETURN new;
-    END IF;
-    IF (new.view_definition is NOT null) THEN -- добавление представления
-      EXECUTE ( 'CREATE VIEW '||new_entity||' AS ' || new.view_definition );
-      EXECUTE ( 'COMMENT ON VIEW  '||new_entity||' IS '''|| new.title||'''');
-    ELSE                                      -- добавление таблицы
-      IF new.primarykey IS NULL THEN
-        name_key = quote_ident(new.tablename||'_key');
-      ELSE
-        name_key = quote_ident(new.primarykey);  
+      IF (new.view_definition is NOT null) THEN -- добавление представления
+        EXECUTE ( 'CREATE VIEW '||new_entity||' AS ' || new.view_definition );
+        EXECUTE ( 'COMMENT ON VIEW  '||new_entity||' IS '''|| new.title||'''');
+      ELSE                                      -- добавление таблицы
+        IF new.primarykey IS NULL THEN
+          name_key = quote_ident(new.tablename||'_key');
+        ELSE
+          name_key = quote_ident(new.primarykey);  
+        END IF;
+        EXECUTE('CREATE TABLE '||new_entity||
+          ' ("'||name_key||'" uuid default uuid_generate_v4(), CONSTRAINT "'||
+          new_table_name||'_pkey"  PRIMARY KEY ("'||name_key||
+          '"))'
+        );
+        EXECUTE('COMMENT ON TABLE  '||new_entity||' IS '''|| new.title||'''');
       END IF;
-      EXECUTE('CREATE TABLE '||new_entity||
-        ' ("'||name_key||'" uuid default uuid_generate_v4(), CONSTRAINT "'||
-        new_table_name||'_pkey"  PRIMARY KEY ("'||name_key||
-        '"))'
-      );
-      EXECUTE('COMMENT ON TABLE  '||new_entity||' IS '''|| new.title||'''');
-    END IF;
-  RETURN new;
-END;$$;
---
---
---  
---
---
-CREATE FUNCTION meta.entity_update_trgf() RETURNS trigger
-    LANGUAGE plpgsql
-    AS 
-$$
-BEGIN
-  UPDATE meta.entity_extra set 
-    base_entity_id = new.base_entity_id,
-    primarykey = new.primarykey
-  WHERE entity_extra.entity_id = new.entity_id;
-
-  IF old.table_type = 'v' THEN
-	  IF new.view_definition <> old.view_definition THEN
-	    EXECUTE ( 'CREATE OR REPLACE VIEW '||new.schema_name||'.'||new.table_name||' AS ' || new.view_definition );
-	  END IF;
-    IF new.title <> old.title THEN
-      EXECUTE ( 'COMMENT ON VIEW  '||new.schema_name||'.'||new.table_name||' IS '''|| new.title||'''');
-    END IF;
-  ELSE  
-    IF new.title <> old.title THEN
-      EXECUTE ( 'COMMENT ON TABLE  '||new.schema_name||'.'||new.table_name||' IS '''|| new.title||'''');
-    END IF;
+    RETURN new;
   END IF;
-  INSERT INTO meta.entity_extra(
-    entity_id, 
-    base_entity_id, 
-    primarykey) 
-    SELECT 
-      new.entity_id, 
-      new.base_entity_id,
-      new.primarykey
-  WHERE NOT exists (SELECT * FROM  meta.entity_extra WHERE entity_extra.entity_id = new.entity_id);
-  RETURN new;
+  IF  TG_OP = 'UPDATE' THEN 
+    UPDATE meta.entity_extra SET 
+      base_entity_id = new.base_entity_id,
+      primarykey = new.primarykey
+    WHERE entity_extra.entity_id = new.entity_id;
+
+    IF old.table_type = 'v' THEN
+      IF new.view_definition <> old.view_definition THEN
+        EXECUTE ( 'CREATE OR REPLACE VIEW '||new.schema_name||'.'||new.table_name||' AS ' || new.view_definition );
+      END IF;
+      IF new.title <> old.title THEN
+        EXECUTE ( 'COMMENT ON VIEW  '||new.schema_name||'.'||new.table_name||' IS '''|| new.title||'''');
+      END IF;
+    ELSE  
+      IF new.title <> old.title THEN
+        EXECUTE ( 'COMMENT ON TABLE  '||new.schema_name||'.'||new.table_name||' IS '''|| new.title||'''');
+      END IF;
+    END IF;
+    INSERT INTO meta.entity_extra(
+      entity_id, 
+      base_entity_id, 
+      primarykey) 
+      SELECT 
+        new.entity_id, 
+        new.base_entity_id,
+        new.primarykey
+    WHERE NOT exists (SELECT * FROM  meta.entity_extra WHERE entity_extra.entity_id = new.entity_id);
+    RETURN new;
+  END IF;
 END;$$;
 --
 --
---  
---
---
-CREATE FUNCTION meta.projection_entity_DELETE_trgf() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$BEGIN
-  DELETE FROM meta.projection_entity_extra WHERE projection_name = old.projection_name;
-  RETURN old;
-END;$$;
+CREATE TRIGGER entity_trg INSTEAD OF INSERT OR UPDATE OR DELETE 
+ON meta.entity FOR EACH ROW EXECUTE PROCEDURE meta.entity_trgf();
 --
 --
 --  
@@ -1009,7 +984,6 @@ BEGIN
     DELETE FROM meta.property_extra WHERE property_name = old.entity_id ||'.'|| old.column_name;
     RETURN old;
   END IF;   
-
 
   IF  TG_OP = 'INSERT' THEN 
     SELECT quote_ident(schema_name)||'.'||quote_ident(table_name) AS entity FROM meta.entity WHERE entity_id = new.entity_id  INTO new_entity;  
@@ -1187,6 +1161,23 @@ END;$$;
 CREATE TRIGGER relation_trg INSTEAD OF INSERT OR UPDATE OR DELETE
   ON meta.relation FOR EACH ROW 
   EXECUTE PROCEDURE meta.relation_trgf();
+
+
+
+
+--
+--
+--  
+--
+--
+CREATE FUNCTION meta.projection_entity_DELETE_trgf() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$BEGIN
+  DELETE FROM meta.projection_entity_extra WHERE projection_name = old.projection_name;
+  RETURN old;
+END;$$;
+
+
 
 
 CREATE FUNCTION meta.projection_entity_insert_trgf() RETURNS trigger
@@ -1489,12 +1480,6 @@ ALTER TABLE ONLY meta.relation_extra
     ADD CONSTRAINT relation_extra_pkey PRIMARY KEY (relation_name);
 
 CREATE INDEX fki_menu_item_fk ON meta.menu_item USING btree (parent);
-
-CREATE TRIGGER entity_delete_trg INSTEAD OF DELETE ON meta.entity FOR EACH ROW EXECUTE PROCEDURE meta.entity_delete_trgf();
-
-CREATE TRIGGER entity_insert_trg INSTEAD OF INSERT ON meta.entity FOR EACH ROW EXECUTE PROCEDURE meta.entity_insert_trgf();
-
-CREATE TRIGGER entity_update_trg INSTEAD OF UPDATE ON meta.entity FOR EACH ROW EXECUTE PROCEDURE meta.entity_update_trgf();
 
 CREATE TRIGGER function_delete_trg INSTEAD OF DELETE ON meta.functions FOR EACH ROW EXECUTE PROCEDURE meta.function_delete_trgf();
 
