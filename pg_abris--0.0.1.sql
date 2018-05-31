@@ -6,47 +6,30 @@
 CREATE SCHEMA meta;
 
 CREATE TABLE meta.entity_extra (
-      entity_id       oid   NOT NULL
-    , primarykey      text
-    , base_entity_id  oid
-    -- , title           text
-    -- , hint            text
+      entity_id       OID   NOT NULL -- Ключевое поле
+    , primarykey      TEXT           -- (ТОЛЬКО ДЛЯ ПРЕДСТАВЛЕНИЙ !!!) Необходимо для хранения ключа в представления
+    , base_entity_id  OID            -- (ТОЛЬКО ДЛЯ ПРЕДСТАВЛЕНИЙ !!!) Указывает таблицу к которой будут добавлены поля представления 
+    , CONSTRAINT entity_extra_pkey PRIMARY KEY (entity_id)
 );
-
 
 CREATE TABLE meta.property_extra (
-    property_name TEXT NOT NULL,
-    column_name text NOT NULL,
-    title text,
-    type text,
-    readonly boolean,
-    visible boolean,
-    ref_entity oid,
-    ref_filter text,
-    ref_key text,
-    link_key text,
-    "order" integer
+      property_name TEXT NOT NULL  -- Ключевое поле
+    , type          TEXT           -- Тип при отображении в проекции (есть пометка ref)   
+    , ref_entity    OID            -- (ТОЛЬКО ДЛЯ ПРЕДСТАВЛЕНИЙ !!!) Необходимо для хранения зависимостей в представлениях
+    , ref_key       TEXT           -- (ТОЛЬКО ДЛЯ ПРЕДСТАВЛЕНИЙ !!!) Необходимо для хранения зависимостей в представлениях
+    , CONSTRAINT property_extra_pkey PRIMARY KEY ( property_name)
 );
 
 
-CREATE TABLE meta.relation_add (
+CREATE TABLE meta.relation_extra (
     relation_name text NOT NULL,
     relation_entity oid,
     defaul_projection text,
     entity_id oid,
     title text,
-    key character varying,
-    "order" integer,
-    hint text
+    key character varying
 );
 
-CREATE TABLE meta.relation_extra (
-    title text,
-    ref_key text,
-    relation_name text NOT NULL,
-    "order" integer,
-    hint text
-);
 
 CREATE TABLE meta.projection_entity_extra (
     title text,
@@ -269,23 +252,21 @@ CREATE VIEW meta.property AS
   SELECT 
     c.oid ||'.'|| a.attname                                         AS property_name,
     c.oid                                                           AS entity_id,
-    COALESCE(pe.visible, true)                                      AS visible,
-    COALESCE(pe.readonly,
-      CASE
-        WHEN (c.relkind = ANY (ARRAY['f', 'p'])) 
-          OR (c.relkind = ANY (ARRAY['v', 'r'])) 
-          AND NOT pg_column_is_updatable(c.oid::regclass, a.attnum, false) 
-          THEN true
-          ELSE false
-      END
-    )                                                               AS readonly,
+    true                                                            AS visible,
+    CASE
+      WHEN (c.relkind = ANY (ARRAY['f', 'p'])) 
+        OR (c.relkind = ANY (ARRAY['v', 'r'])) 
+        AND NOT pg_column_is_updatable(c.oid::regclass, a.attnum, false) 
+        THEN true
+        ELSE false
+    END                                                             AS readonly,
     COALESCE(
         CASE
             WHEN co.conkey[1] IS NOT NULL THEN 'ref'
             WHEN a.atttypid = 2950::oid THEN 'invisible'
             ELSE NULL::text
-        END, COALESCE(pe.type, 'string'))                           AS type,
-    COALESCE(pe.title, COALESCE(d.description, a.attname::text))    AS title,
+        END, 'string')                                              AS type,
+    COALESCE(d.description, a.attname::text)                        AS title,
       CASE
         WHEN t.typtype = 'd' THEN
           CASE
@@ -309,9 +290,7 @@ CREATE VIEW meta.property AS
     COALESCE(pe.ref_entity, r.oid)                                  AS ref_entity,
     a.attname::text                                                 AS column_name,
     COALESCE(pe.ref_key, at.attname::text)::text                    AS ref_key,
-    pe.ref_filter                                                   AS ref_filter,
-    pe.link_key                                                     AS link_key,
-    COALESCE(pe."order", a.attnum * 10)                             AS "order",
+    a.attnum * 10                                                   AS "order",
     co.conname::information_schema.sql_identifier                   AS constraint_name,
     NOT (a.attnotnull OR t.typtype = 'd'::"char" AND t.typnotnull)  AS is_nullable,
     pg_get_expr(ad.adbin, ad.adrelid)                               AS "default"
@@ -374,8 +353,6 @@ CREATE VIEW meta.property_add AS
     entity.entity_id              AS ref_entity,
     '~' || a.attname              AS column_name,
     entity.base_entity_key::text  AS ref_key,
-    NULL::text                    AS ref_filter,
-    NULL::text                    AS link_key,
     a.attnum * 10 + 1000          AS "order",
     true                          AS virtual,
     (a.attname)::text             AS original_column_name,
@@ -397,8 +374,6 @@ UNION
     property.ref_entity,
     property.column_name,
     property.ref_key,
-    property.ref_filter,
-    property.link_key,
     property."order",
     NULL::boolean AS virtual,
     NULL AS original_column_name,
@@ -412,30 +387,29 @@ UNION
 --
 CREATE VIEW meta.relation AS
   SELECT 
-    r.oid||'.'||e.oid               AS relation_name,
-    e.oid                           AS relation_entity,
-    r.oid                           AS entity_id,
-    e.relname                       AS defaul_projection,
-    COALESCE(re.title, e.relname)   AS title,
-    (at.attname)::character varying AS key,
-    COALESCE(re."order", 0)         AS "order",
-    re.hint                         AS hint
+    r.oid||'_'||e.oid                         AS relation_name,
+    e.oid                                     AS relation_entity,
+    r.oid                                     AS entity_id,
+    e.relname                                 AS defaul_projection,
+    COALESCE(
+      obj_description(c.oid, 'pg_constraint')
+      ,e.relname)                             AS title,
+    at.attname                                AS key,
+    false                                     AS virtual
   FROM pg_class e
     JOIN      pg_constraint       c   ON e.oid = c.conrelid AND c.contype = 'f'::"char"
     LEFT JOIN pg_class            r   ON r.oid = c.confrelid
     LEFT JOIN pg_attribute        at  ON  c.conkey[1] = at.attnum AND at.attrelid = c.conrelid
-    LEFT JOIN meta.relation_extra re  ON re.relation_name = r.oid||'.'||e.oid
 UNION
   SELECT 
-    relation_add.relation_name,
-    relation_add.relation_entity,
-    relation_add.entity_id,
-    relation_add.defaul_projection,
-    relation_add.title,
-    relation_add.key,
-    relation_add."order",
-    relation_add.hint
-  FROM meta.relation_add;
+    re.relation_name,
+    re.relation_entity,
+    re.entity_id,
+    re.defaul_projection,
+    re.title,
+    re.key,
+    true                            AS virtual
+  FROM meta.relation_extra re;
 --
 --
 --  projection_entity
@@ -475,12 +449,12 @@ CREATE VIEW meta.projection_property AS
     property.column_name,
     property.ref_key,
     COALESCE( projection_property_extra.ref_projection,
-              meta.entity_to_table(property.ref_entity::text))              AS ref_projection,  ---- ERROR
-    property.link_key,
+              meta.entity_to_table(property.ref_entity::text))        AS ref_projection,  ---- ERROR
+    NULL                                                              AS link_key,
     COALESCE( projection_property_extra."order", 
               property."order")                                       AS "order",
     property.ref_entity,
-    property.ref_filter,
+    NULL                                                              AS ref_filter,
     COALESCE( projection_property_extra.concat_prev, 
               false)                                                  AS concat_prev,
     property.virtual,
@@ -511,7 +485,7 @@ CREATE VIEW meta.projection_relation AS
     relation.entity_id                                             AS entity_id,
     relation.key                                                   AS key,
     COALESCE(pre.opened, false)                                    AS opened,
-    COALESCE(pre."order", relation."order")                        AS "order",
+    pre."order"                                                    AS "order",
     pre.view_id                                                    AS view_id,
     pre.hint                                                       AS hint
   FROM        meta.projection_entity
@@ -1003,6 +977,17 @@ END;$$;
 --  
 --
 --
+CREATE FUNCTION meta.projection_entity_DELETE_trgf() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$BEGIN
+  DELETE FROM meta.projection_entity_extra WHERE projection_name = old.projection_name;
+  RETURN old;
+END;$$;
+--
+--
+--  
+--
+--
 CREATE FUNCTION meta.property_insert_trgf() RETURNS trigger
     LANGUAGE plpgsql
     AS 
@@ -1039,33 +1024,24 @@ BEGIN
     END IF;
     EXECUTE 'ALTER TABLE '||new_entity||' add column '||new.column_name||'  '||new.data_type||'';
   END IF;
+  IF new.title IS NOT NULL THEN -- Сохранение названия колонки
+    EXECUTE 'COMMENT ON COLUMN ' || new_entity || '.' ||new.column_name|| ' IS ''' ||  new.title || '''';
+  END IF;
   INSERT INTO meta.property_extra(
     property_name,
-    column_name,
-    title, 
-    visible, 
-    readonly, 
-    type, 
     ref_key, 
-    link_key, 
-    ref_entity, 
-    "order") 
+    ref_entity) 
     SELECT 
       new.entity_id ||'.'|| COALESCE(new_column_name, new.column_name), 
-      COALESCE(new_column_name, new.column_name), 
-      new.title, 
-      new.visible, 
-      new.readonly, 
-      new.type, 
       new.ref_key, 
-      new.link_key, 
-      new.ref_entity, 
-      new."order";
+      new.ref_entity;
   RETURN new;      
 END;$$;
-
-
-
+--
+--
+--  
+--
+--
 CREATE FUNCTION meta.property_update_trgf() RETURNS trigger
     LANGUAGE plpgsql
     AS $$DECLARE
@@ -1107,57 +1083,127 @@ BEGIN
     new_data_type = quote_ident(new.data_type);
     EXECUTE 'alter table '||old_entity||' alter column '||old_column_name||' type '||new_data_type||' using ('||old_column_name||'::'||new_data_type||')';
   END IF;
+  IF new.title <> old.title THEN -- Сохранение названия колонки
+    EXECUTE 'COMMENT ON COLUMN ' || new_entity || '.' ||new.column_name|| ' IS ''' ||  new.title || '''';
+  END IF;
   UPDATE meta.property_extra set 
-      title      = new.title, 
-      visible    = new.visible, 
-      readonly   = new.readonly, 
-      type       = new.type, 
       ref_key    = new.ref_key, 
-      link_key   = new.link_key, 
-      ref_entity = new.ref_entity,
-      "order"    = new.order,
-      hint       = new.hint,
-      pattern    = new.pattern
+      ref_entity = new.ref_entity
     WHERE property_extra.property_name = new_property_name;
   INSERT INTO meta.property_extra(
-    property_name,  
-    column_name, 
-    title, 
-    visible, 
-    readonly, 
-    type, 
+    property_name,
     ref_key, 
-    link_key, 
-    ref_entity, 
-    "order", 
-    hint, 
-    pattern) 
+    ref_entity) 
     SELECT 
       new_property_name,
-      old.column_name,
-      new.title, 
-      new.visible, 
-      new.readonly, 
-      new.type, 
       new.ref_key, 
-      new.link_key,
-      new.ref_entity,
-      new.order,
-      new.hint,
-      new.pattern
+      new.ref_entity
     WHERE NOT EXISTS
       (SELECT * FROM  meta.property_extra WHERE property_extra.property_name = new_property_name);
   RETURN new;   
 END;$$;
-
-
-CREATE FUNCTION meta.projection_entity_DELETE_trgf() RETURNS trigger
+--
+--
+--  
+--
+--
+CREATE FUNCTION meta.property_DELETE_trgf() RETURNS trigger
     LANGUAGE plpgsql
-    AS $$BEGIN
-  DELETE FROM meta.projection_entity_extra WHERE projection_name = old.projection_name;
-  RETURN old;
-END;$$;
+    AS $$
+DECLARE
+  old_entity text;
+  old_column_name text;
 
+BEGIN
+  -- old_entity := quote_ident(old.entity);
+  -- old_column_name := quote_ident(old.column_name);
+
+  --   EXECUTE('ALTER TABLE '||old_entity||' drop column '||old_column_name);
+  --   EXECUTE('DELETE FROM meta.property_extra WHERE entity = '''||old_entity||'''');
+    
+  RETURN old;   
+END;$$;
+--
+--
+--  
+--
+--
+CREATE FUNCTION meta.relation_trgf() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  IF  TG_OP = 'DELETE' THEN 
+    IF old.virtual = FALSE THEN
+      EXECUTE(
+        ' ALTER TABLE '||(select schema_name||'.'||table_name from meta.entity where entity_id = old.relation_entity)||
+        ' DROP CONSTRAINT  "'||(select conname from pg_constraint where conrelid = old.relation_entity and confrelid = old.entity_id)||'"');
+    ELSE
+      DELETE FROM meta.relation_extra WHERE relation_name = old.relation_name;  
+    END IF;
+    RETURN old;
+  END IF;   
+  IF (select count(*) from meta.property where entity_id = new.relation_entity and column_name = new.key) <> 1 THEN
+    RAISE EXCEPTION 'Неверное имя ключа - %', new.key;
+  END IF;
+  IF  TG_OP = 'UPDATE' THEN 
+    IF new.virtual <> old.virtual THEN
+      RAISE EXCEPTION 'Тип зависимости поменять нельзя.';
+    END IF;
+    IF new.title <> old.title AND new.virtual = false THEN
+      EXECUTE ( 
+        'COMMENT ON CONSTRAINT  '||(select conname from pg_constraint where conrelid = new.relation_entity and confrelid = new.entity_id)||
+        ' ON '||(select schema_name||'.'||table_name from meta.entity where entity_id = new.relation_entity) ||
+        ' IS ''' ||new.title||'''');
+	  END IF;
+    IF new.virtual = true THEN
+      UPDATE meta.relation_extra SET
+          relation_entity = new.relation_entity,
+          defaul_projection = new.defaul_projection,
+          entity_id = new.entity_id,
+          title = new.title,
+          key = new.key
+        WHERE relation_extra.relation_name = new.entity_id||'_'||new.relation_entity;
+	  END IF;
+    RETURN new;   
+  END IF;
+
+  IF  TG_OP = 'INSERT' THEN 
+    IF new.virtual = FALSE THEN
+      -- EXECUTE(
+      --   'ALTER TABLE '||new_entity||' 
+      --   ADD CONSTRAINT '||substring(new_entity, '\.(\w*)')||'_'||new_column_name||'_fkey
+      --   FOREIGN KEY ("'||new_column_name||'")
+      --   REFERENCES '||new_ref_entity||' ('||new_ref_key||') 
+      --   MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;');
+      RAISE EXCEPTION 'Вставка зависимости только через колонки';
+    ELSE
+      INSERT INTO meta.relation_extra(
+          relation_name,
+          relation_entity,
+          defaul_projection,
+          entity_id,
+          title,
+          key
+        ) 
+        SELECT
+          new.entity_id||'_'||new.relation_entity as relation_name,
+          new.relation_entity,
+          new.defaul_projection,
+          new.entity_id,
+          new.title,
+          new.key
+        WHERE NOT exists
+        (SELECT * FROM  meta.relation_extra WHERE relation_extra.relation_name = new.entity_id||'_'||new.relation_entity);
+    END IF;
+    RETURN new;   
+  END IF;
+  RETURN new;   
+END;$$;
+--
+--
+CREATE TRIGGER relation_trg INSTEAD OF INSERT OR UPDATE OR DELETE
+  ON meta.relation FOR EACH ROW 
+  EXECUTE PROCEDURE meta.relation_trgf();
 
 
 CREATE FUNCTION meta.projection_entity_insert_trgf() RETURNS trigger
@@ -1303,52 +1349,12 @@ END;$$;
 
 
 
-CREATE FUNCTION meta.property_DELETE_trgf() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$DECLARE
-  old_entity text;
-  old_column_name text;
-
-BEGIN
-  -- old_entity := quote_ident(old.entity);
-  -- old_column_name := quote_ident(old.column_name);
-
-  --   EXECUTE('ALTER TABLE '||old_entity||' drop column '||old_column_name);
-  --   EXECUTE('DELETE FROM meta.property_extra WHERE entity = '''||old_entity||'''');
-    
-  RETURN old;   
-END;$$;
 
 
 
 
 
 
-CREATE FUNCTION meta.relation_update_trgf() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-_temp text;
-BEGIN
---  UPDATE meta.relation_extra set 
---     title = new.title, 
---     "order" = new.order,
---     hint = new.hint
--- WHERE relation_extra.relation_name = new.relation_name RETURNING relation_name INTO _temp;
-
--- IF _temp IS NULL THEN
---  INSERT INTO meta.relation_extra(relation_name, title,  "order", hint) 
---    SELECT
---       new.entity||'.'||new.relation_entity||'.'||new.key as relation_name,
---       new.title,
---       new.order,
---       new.hint
---     WHERE NOT exists
---    (SELECT * FROM  meta.relation_extra WHERE relation_extra.relation_name = new.relation_name);
--- END IF;
- RETURN new;   
-
-END;$$;
 
 
 
@@ -1469,9 +1475,6 @@ END;$$;
 
 
 
-ALTER TABLE ONLY meta.entity_extra
-    ADD CONSTRAINT entity_extra_pkey PRIMARY KEY (entity_id);
-
 ALTER TABLE ONLY meta.menu_item
     ADD CONSTRAINT menu_item_pkey PRIMARY KEY (name);
 
@@ -1499,15 +1502,8 @@ ALTER TABLE ONLY meta.projection_redirect
 ALTER TABLE ONLY meta.projection_relation_extra
     ADD CONSTRAINT projection_relation_extra_pkey PRIMARY KEY (projection_relation_name);
 
-ALTER TABLE ONLY meta.property_extra
-    ADD CONSTRAINT property_extra_pkey PRIMARY KEY (column_name, property_name);
-
-ALTER TABLE ONLY meta.relation_add
-    ADD CONSTRAINT relation_add_pkey PRIMARY KEY (relation_name);
-
 ALTER TABLE ONLY meta.relation_extra
     ADD CONSTRAINT relation_extra_pkey PRIMARY KEY (relation_name);
-
 
 CREATE INDEX fki_menu_item_fk ON meta.menu_item USING btree (parent);
 
@@ -1537,15 +1533,19 @@ CREATE TRIGGER projection_property_update_trg INSTEAD OF INSERT OR UPDATE ON met
 
 CREATE TRIGGER projection_redirect_trg BEFORE INSERT OR UPDATE ON meta.projection_redirect FOR EACH ROW EXECUTE PROCEDURE meta.projection_redirect();
 
-CREATE TRIGGER projection_relation_update_trg INSTEAD OF INSERT OR UPDATE ON meta.projection_relation FOR EACH ROW EXECUTE PROCEDURE meta.projection_relation_update_trgf();
-
 CREATE TRIGGER property_DELETE_trg INSTEAD OF DELETE ON meta.property FOR EACH ROW EXECUTE PROCEDURE meta.property_DELETE_trgf();
 
 CREATE TRIGGER property_insert_trg INSTEAD OF INSERT ON meta.property FOR EACH ROW EXECUTE PROCEDURE meta.property_insert_trgf();
 
 CREATE TRIGGER property_update_trg INSTEAD OF UPDATE ON meta.property FOR EACH ROW EXECUTE PROCEDURE meta.property_update_trgf();
 
-CREATE TRIGGER relation_update_trg INSTEAD OF INSERT OR UPDATE ON meta.relation FOR EACH ROW EXECUTE PROCEDURE meta.relation_update_trgf();
+--
+--
+CREATE TRIGGER projection_relation_update_trg INSTEAD OF INSERT OR UPDATE 
+  ON meta.projection_relation FOR EACH ROW 
+  EXECUTE PROCEDURE meta.projection_relation_update_trgf();
+
+
 
    
    
