@@ -3,173 +3,309 @@
 
 CREATE SCHEMA meta;
 
+
+--
+--
+--  extra
+--
+--
 CREATE TABLE meta.entity_extra (
     entity_id       OID   NOT NULL -- Ключевое поле
   , primarykey      TEXT           -- (ТОЛЬКО ДЛЯ ПРЕДСТАВЛЕНИЙ !!!) Необходимо для хранения ключа в представления
   , base_entity_id  OID            -- (ТОЛЬКО ДЛЯ ПРЕДСТАВЛЕНИЙ !!!) Указывает таблицу к которой будут добавлены поля представления 
+  , e_schema        TEXT           -- Схема (для переноса между базами) 
+  , e_table         TEXT           -- Таблица (для переноса между базами)
+  , b_schema        TEXT           -- Базовая схема (для переноса между базами)
+  , b_table         TEXT           -- Базовая таблица (для переноса между базами)
   , CONSTRAINT entity_extra_pkey PRIMARY KEY (entity_id)
 );
+--
+--
+CREATE FUNCTION meta.entity_ex_trgf() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  IF new.entity_id IS NULL THEN
+    SELECT v.oid 
+      FROM pg_class v LEFT JOIN pg_namespace n ON n.oid = v.relnamespace 
+      WHERE n.nspname = new.e_schema AND v.relname = new.e_table 
+      INTO new.entity_id;
+  ELSE
+    SELECT n.nspname, v.relname 
+      FROM pg_class v LEFT JOIN pg_namespace n ON n.oid = v.relnamespace 
+      WHERE v.oid = new.entity_id 
+      INTO new.e_schema, new.e_table;
 
+    SELECT n.nspname, v.relname 
+      FROM pg_class v LEFT JOIN pg_namespace n ON n.oid = v.relnamespace 
+      WHERE v.oid = new.base_entity_id 
+      INTO new.b_schema, new.b_table;
+  END IF;
+  RETURN new;
+END;$$;
+--
+--
+CREATE TRIGGER entity_ex_trg BEFORE INSERT OR UPDATE  
+ON meta.entity_extra FOR EACH ROW EXECUTE PROCEDURE meta.entity_ex_trgf();
+--
+--
+--  extra
+--
+--
 CREATE TABLE meta.property_extra (
     property_name   TEXT NOT NULL  -- Ключевое поле
   , type            TEXT           -- Тип при отображении в проекции (есть пометка ref)   
   , ref_entity      OID            -- (ТОЛЬКО ДЛЯ ПРЕДСТАВЛЕНИЙ !!!) Необходимо для хранения зависимостей в представлениях
   , ref_key         TEXT           -- (ТОЛЬКО ДЛЯ ПРЕДСТАВЛЕНИЙ !!!) Необходимо для хранения зависимостей в представлениях
+  , e_schema        TEXT           -- Схема (для переноса между базами) 
+  , e_table         TEXT           -- Таблица (для переноса между базами)
+  , p_name          TEXT           -- Свойство (для переноса между базами) 
+  , r_schema        TEXT           -- Базовая схема (для переноса между базами)
+  , r_table         TEXT           -- Базовая таблица (для переноса между базами)
   , CONSTRAINT property_extra_pkey PRIMARY KEY ( property_name)
 );
+--
+--
+CREATE FUNCTION meta.property_ex_trgf() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  IF new.property_name IS NULL THEN
+    SELECT v.oid || '_' || new.p_name 
+      FROM pg_class v LEFT JOIN pg_namespace n ON n.oid = v.relnamespace 
+      WHERE n.nspname = new.e_schema AND v.relname = new.e_table 
+      INTO new.entity_id;
+  ELSE
+    SELECT n.nspname, v.relname 
+      FROM pg_class v LEFT JOIN pg_namespace n ON n.oid = v.relnamespace 
+      WHERE v.oid = substring(new.property_name, '(\d+)_')::oid   
+      INTO new.e_schema, new.e_table;
 
+    SELECT n.nspname, v.relname 
+      FROM pg_class v LEFT JOIN pg_namespace n ON n.oid = v.relnamespace 
+      WHERE v.oid = new.ref_entity 
+      INTO new.r_schema, new.r_table;
+    new.p_name = substring(new.property_name, '\d+_(.+)');
+  END IF;
+  RETURN new;
+END;$$;
+--
+--
+CREATE TRIGGER property_ex_trg BEFORE INSERT OR UPDATE  
+ON meta.property_extra FOR EACH ROW EXECUTE PROCEDURE meta.property_ex_trgf();
+--
+--
+--  extra
+--
+--
 CREATE TABLE meta.relation_extra (
     relation_name   TEXT NOT NULL  -- Ключевое поле
   , entity_id       OID            -- Базовая таблица              
   , relation_entity OID            -- Подсоединяемая таблица 
   , key             TEXT           -- Поле в подсоединяемой таблице которое указывает на ключевое поле базовай таблицы 
   , title           TEXT           -- Заголовок 
+  , e_schema        TEXT           -- Схема (для переноса между базами) 
+  , e_table         TEXT           -- Таблица (для переноса между базами)
+  , r_schema        TEXT           -- Базовая схема (для переноса между базами)
+  , r_table         TEXT           -- Базовая таблица (для переноса между базами)
   , CONSTRAINT relation_extra_pkey PRIMARY KEY (relation_name)
 );
-
+--
+--
+CREATE FUNCTION meta.relation_ex_trgf() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  relation_name TEXT;
+BEGIN
+  IF new.relation_name IS NULL THEN
+    SELECT v.oid  
+      FROM pg_class v LEFT JOIN pg_namespace n ON n.oid = v.relnamespace 
+      WHERE n.nspname = new.e_schema AND v.relname = new.e_table 
+      INTO relation_name;
+    SELECT relation_name||'_'||v.oid  
+      FROM pg_class v LEFT JOIN pg_namespace n ON n.oid = v.relnamespace 
+      WHERE n.nspname = new.e_schema AND v.relname = new.e_table 
+      INTO new.relation_name;
+  ELSE
+    SELECT n.nspname, v.relname 
+      FROM pg_class v LEFT JOIN pg_namespace n ON n.oid = v.relnamespace 
+      WHERE v.oid = new.entity_id   
+      INTO new.e_schema, new.e_table;
+    SELECT n.nspname, v.relname 
+      FROM pg_class v LEFT JOIN pg_namespace n ON n.oid = v.relnamespace 
+      WHERE v.oid = new.relation_entity 
+      INTO new.r_schema, new.r_table;
+  END IF;
+  RETURN new;
+END;$$;
+--
+--
+CREATE TRIGGER relation_ex_trg BEFORE INSERT OR UPDATE  
+ON meta.relation_extra FOR EACH ROW EXECUTE PROCEDURE meta.relation_ex_trgf();
+--
+--
+--  extra
+--
+--
 CREATE TABLE meta.projection_extra (
-    projection_name TEXT NOT NULL
+    projection_name TEXT NOT NULL           -- Ключевое поле
   , title           TEXT
   , jump            TEXT
-  , additional      TEXT
+  , additional      TEXT                    -- дополнительные параметры 
   , readonly        BOOLEAN DEFAULT false
   , entity_id       OID NOT NULL
   , hint            TEXT
+  , e_schema        TEXT                    -- Схема (для переноса между базами) 
+  , e_table         TEXT                    -- Таблица (для переноса между базами)
   , CONSTRAINT projection_entity_extra_pkey PRIMARY KEY (projection_name, entity_id)
 );
-
+--
+--
+CREATE FUNCTION meta.projection_ex_trgf() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  IF new.entity_id IS NULL THEN
+    SELECT v.oid 
+      FROM pg_class v LEFT JOIN pg_namespace n ON n.oid = v.relnamespace 
+      WHERE n.nspname = new.e_schema AND v.relname = new.e_table 
+      INTO new.entity_id;
+  ELSE
+    SELECT n.nspname, v.relname 
+      FROM pg_class v LEFT JOIN pg_namespace n ON n.oid = v.relnamespace 
+      WHERE v.oid = new.entity_id 
+      INTO new.e_schema, new.e_table;
+  END IF;
+  RETURN new;
+END;$$;
+--
+--
+CREATE TRIGGER projection_ex_trg BEFORE INSERT OR UPDATE  
+ON meta.projection_extra FOR EACH ROW EXECUTE PROCEDURE meta.projection_ex_trgf();
+--
+--
+--  extra
+--
+--
 CREATE TABLE meta.projection_property_extra (
-    column_name text NOT NULL,
-    title text,
-    type text,
-    readonly boolean,
-    visible boolean,
-    projection_name text NOT NULL,
-    ref_projection text,
-    "order" integer,
-    concat_prev boolean,
-    projection_property_name text,
-    hint text,
-    pattern TEXT,
-    CONSTRAINT projection_property_extra_pkey PRIMARY KEY (projection_name, column_name)
+    column_name               TEXT NOT NULL
+  , title                     TEXT
+  , type                      TEXT
+  , readonly                  BOOLEAN
+  , visible                   BOOLEAN
+  , projection_name           TEXT NOT NULL
+  , ref_projection            TEXT
+  , "order"                   INTEGER
+  , concat_prev               BOOLEAN
+  , projection_property_name  TEXT
+  , hint                      TEXT
+  , pattern                   TEXT
+  , CONSTRAINT projection_property_extra_pkey PRIMARY KEY (projection_name, column_name)
 );
 
 CREATE TABLE meta.projection_relation_extra (
-    title text,
-    readonly boolean,
-    visible boolean,
-    projection_name text NOT NULL,
-    related_projection_name text,
-    opened boolean DEFAULT true,
-    "order" integer,
-    view_id text,
-    relation_entity text,
-    projection_relation_name text NOT NULL,
-    hint text,
+    title TEXT,
+    readonly BOOLEAN,
+    visible BOOLEAN,
+    projection_name TEXT NOT NULL,
+    related_projection_name TEXT,
+    opened BOOLEAN DEFAULT true,
+    "order" INTEGER,
+    view_id TEXT,
+    relation_entity TEXT,
+    projection_relation_name TEXT NOT NULL,
+    hint TEXT,
     CONSTRAINT projection_relation_extra_pkey PRIMARY KEY (projection_relation_name)
 );
 
 CREATE TABLE meta.projection_buttons (
-    button text NOT NULL,
-    projection_name text NOT NULL,
-    title text,
-    icon text,
-    function text,
-    schema text,
-    use_in_list boolean,
+    button TEXT NOT NULL,
+    projection_name TEXT NOT NULL,
+    title TEXT,
+    icon TEXT,
+    function TEXT,
+    schema TEXT,
+    use_in_list BOOLEAN,
     CONSTRAINT projection_buttons_pkey PRIMARY KEY (button, projection_name)
 );
 
 
-
-
-
 CREATE TABLE meta.menu_item (
-    name text NOT NULL,
-    title text,
-    parent text,
-    projection text,
-    view_id text DEFAULT 'list'::text,
-    role text,
-    "order" integer DEFAULT 0,
-    iconclass text,
-    style text,
-    key text,
+    name TEXT NOT NULL,
+    title TEXT,
+    parent TEXT,
+    projection TEXT,
+    view_id TEXT DEFAULT 'list',
+    role TEXT,
+    "order" INTEGER DEFAULT 0,
+    iconclass TEXT,
+    style TEXT,
+    key TEXT,
     CONSTRAINT menu_item_pkey PRIMARY KEY (name)
 );
 
 CREATE TABLE meta.page (
-    page_key text NOT NULL,
-    title text,
+    page_key TEXT NOT NULL,
+    title TEXT,
     CONSTRAINT page_pkey PRIMARY KEY (page_key)
 );
 
 
 CREATE TABLE meta.page_block (
-    page_key text,
-    block_key integer  NOT NULL,
-    size_percent integer,
-    parent_block_key integer,
-    view_id text,
-    projection_name text,
-    entity_id text,
-    "order" integer,
-    layout integer,
+    page_key TEXT,
+    block_key INTEGER  NOT NULL,
+    size_percent INTEGER,
+    parent_block_key INTEGER,
+    view_id TEXT,
+    projection_name TEXT,
+    entity_id TEXT,
+    "order" INTEGER,
+    layout INTEGER,
     CONSTRAINT page_block_pkey PRIMARY KEY (block_key)
 );
 
-
-
+--------------------------------
 CREATE TABLE meta.pivot (
-    entity_id text NOT NULL,
-    entity_row text,
-    title_column text,
-    num_column text,
-    hint_column text,
+    entity_id TEXT NOT NULL,
+    entity_row TEXT,
+    title_column TEXT,
+    num_column TEXT,
+    hint_column TEXT,
     CONSTRAINT pivot_pkey PRIMARY KEY (entity_id)
 );
 
 
-
-CREATE TABLE meta.projection_redirect (
-    projection_name text,
-    projection_redirect_to text,
-    role text,
-    projection_redirect text NOT NULL,
-    CONSTRAINT projection_redirect_pkey PRIMARY KEY (projection_redirect)
-);
-
-
-CREATE FUNCTION meta.entity_to_table(
-  parameter text) 
-  RETURNS text
-  LANGUAGE plpgsql
-AS $$
-DECLARE
-  result text;
-BEGIN
-  result := substring(parameter, '\.(\w*)'::text);
-  RETURN result;
-END;
-$$;
+-- CREATE FUNCTION meta.entity_to_table(
+--   parameter TEXT) 
+--   RETURNS TEXT
+--   LANGUAGE plpgsql
+-- AS $$
+-- DECLARE
+--   result TEXT;
+-- BEGIN
+--   result := substring(parameter, '\.(\w*)'::TEXT);
+--   RETURN result;
+-- END;
+-- $$;
 
 
 
-CREATE FUNCTION meta.entity_to_schema(
-  parameter text) 
-  RETURNS text
-  LANGUAGE plpgsql
-AS $$
-DECLARE
-  result text;
-BEGIN
-  result := substring(parameter, '\w*'::text);
-  RETURN result;
-END;
-$$;
+-- CREATE FUNCTION meta.entity_to_schema(
+--   parameter TEXT) 
+--   RETURNS TEXT
+--   LANGUAGE plpgsql
+-- AS $$
+-- DECLARE
+--   result TEXT;
+-- BEGIN
+--   result := substring(parameter, '\w*'::TEXT);
+--   RETURN result;
+-- END;
+-- $$;
 
 CREATE FUNCTION meta.clean() 
-  RETURNS text
+  RETURNS TEXT
   LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -196,8 +332,8 @@ CREATE VIEW  meta.entity AS
     COALESCE( obj_description(v.oid), 
                 v.relname)                      AS title,
     COALESCE(ee.primarykey, b.base_entity_key)  AS primarykey,
-    v.relkind::text                             AS table_type,
-    pg_get_viewdef(v.oid)::text                 AS view_definition,
+    v.relkind::TEXT                             AS table_type,
+    pg_get_viewdef(v.oid)::TEXT                 AS view_definition,
     b.base_entity_key                           AS base_entity_key,
     b.base_entity_id                            AS base_entity_id
   FROM pg_class v
@@ -206,7 +342,7 @@ CREATE VIEW  meta.entity AS
     ( SELECT 
         t.refobjid        AS entity_id,
         t.obj             AS base_entity_id,
-        at.attname::text  AS base_entity_key
+        at.attname::TEXT  AS base_entity_key
       FROM 
         ( SELECT  
             dv.refobjid,
@@ -227,7 +363,7 @@ CREATE VIEW  meta.entity AS
     LEFT JOIN meta.entity_extra ee ON ee.entity_id = v.oid
   WHERE 
     v.relkind = ANY (ARRAY['v'::"char"])
-    AND (pg_has_role(v.relowner, 'USAGE'::text) 
+    AND (pg_has_role(v.relowner, 'USAGE'::TEXT) 
       OR has_table_privilege(v.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') 
       OR has_any_column_privilege(v.oid, 'SELECT, INSERT, UPDATE, REFERENCES')
     ) 
@@ -239,8 +375,8 @@ UNION ALL
     r.relname                                   AS table_name,
     COALESCE(obj_description(r.oid), r.relname) AS title,
     at.attname                                  AS primarykey,
-    r.relkind::text                             AS table_type,
-    NULL::text                                  AS view_definition,
+    r.relkind::TEXT                             AS table_type,
+    NULL::TEXT                                  AS view_definition,
     NULL::name                                  AS base_entity_key,
     NULL::oid                                   AS base_entity_id
   FROM pg_class r
@@ -262,13 +398,13 @@ UNION ALL
 CREATE VIEW meta.property AS 
   SELECT 
     c.oid ||'_'|| a.attname                                         AS property_name,
-    a.attname::text                                                 AS column_name,
+    a.attname::TEXT                                                 AS column_name,
     c.oid                                                           AS entity_id,
     COALESCE(
         CASE
             WHEN co.conkey[1] IS NOT NULL THEN 'ref'
             WHEN a.atttypid = 2950::oid THEN 'invisible'
-            ELSE NULL::text
+            ELSE NULL::TEXT
         END, 'string')                                              AS type,
     CASE
       WHEN t.typtype = 'd' THEN
@@ -298,9 +434,9 @@ CREATE VIEW meta.property AS
         THEN true
         ELSE false
     END                                                             AS readonly,
-    COALESCE(d.description, a.attname::text)                        AS title,
+    COALESCE(d.description, a.attname::TEXT)                        AS title,
     COALESCE(pe.ref_entity, r.oid)                                  AS ref_entity,
-    COALESCE(pe.ref_key, at.attname::text)::text                    AS ref_key,
+    COALESCE(pe.ref_key, at.attname::TEXT)::TEXT                    AS ref_key,
     a.attnum * 10                                                   AS "order",
     co.conname::information_schema.sql_identifier                   AS constraint_name,
     NOT (a.attnotnull OR t.typtype = 'd'::"char" AND t.typnotnull)  AS is_nullable,
@@ -324,8 +460,8 @@ CREATE VIEW meta.property AS
   WHERE a.attnum > 0 
     AND NOT a.attisdropped 
     AND (c.relkind = ANY (ARRAY['r'::"char", 'v'::"char", 'f'::"char", 'p'::"char"])) 
-    AND (pg_has_role(c.relowner, 'USAGE'::text) 
-      OR has_column_privilege(c.oid, a.attnum, 'SELECT, INSERT, UPDATE, REFERENCES'::text)) 
+    AND (pg_has_role(c.relowner, 'USAGE'::TEXT) 
+      OR has_column_privilege(c.oid, a.attnum, 'SELECT, INSERT, UPDATE, REFERENCES'::TEXT)) 
     AND (nc.nspname <> ALL (ARRAY['information_schema'::name, 'pg_catalog'::name, 'meta'::name]));
 --
 --
@@ -339,7 +475,7 @@ CREATE VIEW meta.property_add AS
     false                         AS visible,
     true                          AS readonly,
     'string'                      AS type,
-    a.attname::text               AS title,
+    a.attname::TEXT               AS title,
     ( CASE
         WHEN t.typtype = 'd' THEN
           CASE
@@ -360,15 +496,15 @@ CREATE VIEW meta.property_add AS
                                                         ELSE ''
           END)
       END
-    )::text                       AS data_type,
+    )::TEXT                       AS data_type,
     entity.entity_id              AS ref_entity,
     '~' || a.attname              AS column_name,
-    entity.base_entity_key::text  AS ref_key,
+    entity.base_entity_key::TEXT  AS ref_key,
     a.attnum * 10 + 1000          AS "order",
     true                          AS virtual,
-    (a.attname)::text             AS original_column_name,
+    (a.attname)::TEXT             AS original_column_name,
     false                         AS is_nullable,
-    NULL::text                    AS "default"
+    NULL::TEXT                    AS "default"
   FROM meta.entity
     JOIN pg_attribute a ON a.attrelid = entity.entity_id
     JOIN pg_type t
@@ -386,7 +522,7 @@ UNION
     property.column_name,
     property.ref_key,
     property."order",
-    NULL::boolean AS virtual,
+    NULL::BOOLEAN AS virtual,
     NULL AS original_column_name,
     property.is_nullable,
     property."default"
@@ -428,7 +564,7 @@ CREATE VIEW meta.projection AS
   SELECT 
     COALESCE(pe.projection_name, e.table_name)                         AS projection_name,
     e.entity_id                                                        AS entity_id,
-    false                                                                AS base,
+    false                                                              AS base,
     COALESCE(pe.title, e.title)                                        AS title,
     COALESCE(pe.jump, COALESCE(pe.projection_name, e.table_name))      AS jump,
     e.primarykey                                                       AS primarykey,
@@ -449,8 +585,8 @@ CREATE VIEW meta.projection AS
     e.title           AS title,
     e.table_name      AS jump,
     e.primarykey      AS primarykey,
-    NULL::text        AS additional,
-    (NOT has_table_privilege(e.entity_id, 'insert, update, DELETE'::text)) AS readonly,
+    NULL::TEXT        AS additional,
+    (NOT has_table_privilege(e.entity_id, 'insert, update, DELETE'::TEXT)) AS readonly,
     e.base_entity_id  AS base_entity_id,
     null              AS hint
    FROM meta.entity e;
@@ -461,37 +597,38 @@ CREATE VIEW meta.projection AS
 --
 CREATE VIEW meta.projection_property AS
   SELECT 
-    projection.projection_name||'.'|| property.column_name     AS projection_property_name,
+    projection.projection_name||'.'|| property.column_name  AS projection_property_name,
     COALESCE( projection_property_extra.title, 
-              property.title)                                         AS title,
+              property.title)                               AS title,
     COALESCE( projection_property_extra.type, 
-              property.type)                                          AS type,
+              property.type)                                AS type,
     COALESCE( projection_property_extra.readonly, 
-              property.readonly)                                      AS readonly,
+              property.readonly)                            AS readonly,
     COALESCE( projection_property_extra.visible, 
-              property.visible)                                       AS visible,
-    projection.projection_name,
-    property.column_name,
-    property.ref_key,
+              property.visible)                             AS visible,
+    projection.projection_name                              AS projection_name,
+    property.column_name                                    AS column_name,
+    property.ref_key                                        AS ref_key,
     COALESCE( projection_property_extra.ref_projection,
-              meta.entity_to_table(property.ref_entity::text))        AS ref_projection,  ---- ERROR
-    NULL                                                              AS link_key,
+              pr.projection_name)                           AS ref_projection,
+    NULL                                                    AS link_key,
     COALESCE( projection_property_extra."order", 
-              property."order")                                       AS "order",
+              property."order")                             AS "order",
     property.ref_entity,
-    NULL                                                              AS ref_filter,
+    NULL                                                    AS ref_filter,
     COALESCE( projection_property_extra.concat_prev, 
-              false)                                                  AS concat_prev,
-    property.virtual,
-    property.original_column_name,
-    projection_property_extra.hint,
-    projection_property_extra.pattern,
-    property.is_nullable,
-    property."default"
+              false)                                        AS concat_prev,
+    property.virtual                                        AS virtual,
+    property.original_column_name                           AS original_column_name,
+    projection_property_extra.hint                          AS hint,
+    projection_property_extra.pattern                       AS pattern,
+    property.is_nullable                                    AS is_nullable,
+    property."default"                                      AS "default"
   FROM meta.projection
     LEFT JOIN meta.property_add property ON projection.entity_id = property.entity_id
     LEFT JOIN meta.projection_property_extra ON property.column_name = projection_property_extra.column_name 
-       AND projection.projection_name = projection_property_extra.projection_name;
+       AND projection.projection_name = projection_property_extra.projection_name
+    LEFT JOIN meta.projection pr ON property.ref_entity = pr.entity_id AND pr.base = true;
 --
 --
 --  projection_relation
@@ -499,25 +636,25 @@ CREATE VIEW meta.projection_property AS
 --
 CREATE VIEW meta.projection_relation AS
   SELECT 
-    projection.projection_name||'.'||relation.relation_name AS projection_relation_name,
-    COALESCE(pre.title, relation.title)                            AS title,
+    p.projection_name||'.'||relation.relation_name AS projection_relation_name,
+    COALESCE(pre.title, relation.title)            AS title,
     COALESCE( pre.related_projection_name, 
-              entity.table_name)                                   AS related_projection_name,
-    COALESCE(pre.readonly, false)                                  AS readonly,
-    COALESCE(pre.visible, true)                                    AS visible,
-    projection.projection_name                              AS projection_name,
-    relation.relation_entity                                       AS relation_entity,
-    relation.entity_id                                             AS entity_id,
-    relation.key                                                   AS key,
-    COALESCE(pre.opened, false)                                    AS opened,
-    pre."order"                                                    AS "order",
-    pre.view_id                                                    AS view_id,
-    pre.hint                                                       AS hint
-  FROM        meta.projection
-    JOIN      meta.relation                       ON relation.entity_id = projection.entity_id
+              entity.table_name)                   AS related_projection_name,
+    COALESCE(pre.readonly, false)                  AS readonly,
+    COALESCE(pre.visible, true)                    AS visible,
+    p.projection_name                              AS projection_name,
+    relation.relation_entity                       AS relation_entity,
+    relation.entity_id                             AS entity_id,
+    relation.key                                   AS key,
+    COALESCE(pre.opened, false)                    AS opened,
+    pre."order"                                    AS "order",
+    pre.view_id                                    AS view_id,
+    pre.hint                                       AS hint
+  FROM        meta.projection p
+    JOIN      meta.relation                       ON relation.entity_id = p.entity_id
     LEFT JOIN meta.entity                         ON relation.relation_entity = entity.entity_id 
     LEFT JOIN meta.projection_relation_extra  pre ON 
-        projection.projection_name||'.'||relation.relation_name = pre.projection_relation_name;
+        p.projection_name||'.'||relation.relation_name = pre.projection_relation_name;
 --
 --
 --  
@@ -527,7 +664,7 @@ CREATE VIEW meta.functions AS
  SELECT p.proname AS function_name,
     p.prosrc AS function_code,
     n.nspname AS function_schema,
-    (((n.nspname)::text || '.'::text) || (p.proname)::text) AS function_key
+    (((n.nspname)::TEXT || '.'::TEXT) || (p.proname)::TEXT) AS function_key
    FROM (pg_namespace n
      JOIN pg_proc p ON ((p.pronamespace = n.oid)))
   WHERE n.nspname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name, 'meta'::name]);
@@ -545,7 +682,7 @@ CREATE VIEW meta.menu AS
       t1.projection,
       t1.view_id,
       t1.role,
-      (to_char(t1."order", '000'::text) || t1.name) AS path,
+      (to_char(t1."order", '000'::TEXT) || t1.name) AS path,
       1,
       t1.iconclass,
       t1.style,
@@ -560,7 +697,7 @@ CREATE VIEW meta.menu AS
       t2.projection,
       t2.view_id,
       t2.role,
-      (((temp1_1.path || '->'::text) || to_char(t2."order", '000'::text)) || t2.name) AS "varchar",
+      (((temp1_1.path || '->'::TEXT) || to_char(t2."order", '000'::TEXT)) || t2.name) AS "varchar",
       (temp1_1.level + 1),
       t2.iconclass,
       t2.style,
@@ -582,7 +719,7 @@ CREATE VIEW meta.menu AS
   WHERE ((( SELECT count(tin.name) AS count
            FROM (temp1 tin
              JOIN meta.projection ON ((tin.projection = projection.projection_name)))
-          WHERE (tin.parent = temp1.name)) > 0) AND ((temp1.role IS NULL) OR pg_has_role("current_user"(), (temp1.role)::name, 'member'::text)))
+          WHERE (tin.parent = temp1.name)) > 0) AND ((temp1.role IS NULL) OR pg_has_role("current_user"(), (temp1.role)::name, 'member'::TEXT)))
 UNION
  SELECT temp1.name,
     temp1.parent,
@@ -596,7 +733,7 @@ UNION
     temp1.key
    FROM (temp1
      JOIN meta.projection ON ((temp1.projection = projection.projection_name)))
-  WHERE ((temp1.role IS NULL) OR pg_has_role("current_user"(), (temp1.role)::name, 'member'::text))
+  WHERE ((temp1.role IS NULL) OR pg_has_role("current_user"(), (temp1.role)::name, 'member'::TEXT))
  LIMIT 1000;
 --
 --
@@ -618,20 +755,18 @@ CREATE VIEW meta.property_type  AS
       SELECT 'bool'             AS type, 'Истина или ложь'                        AS note
 UNION SELECT 'button'           AS type, 'Кнопка'                                 AS note
 UNION SELECT 'caption'          AS type, 'Заголовок'                              AS note
-UNION SELECT 'date'             AS type, 'Строка'                                 AS note
+UNION SELECT 'date'             AS type, 'Дата'                                   AS note
 UNION SELECT 'datetime'         AS type, 'Дата и время'                           AS note
 UNION SELECT 'file'             AS type, 'Файл'                                   AS note
-UNION SELECT 'getFileForPrint'  AS type, 'Файл для печати наряда'                 AS note
-UNION SELECT 'integer'          AS type, 'Целочисленное'                          AS note
+UNION SELECT 'INTEGER'          AS type, 'Целочисленное'                          AS note
 UNION SELECT 'address'          AS type, 'Адрес'                                  AS note
 UNION SELECT 'plain'            AS type, 'Текст без форматирования'               AS note
 UNION SELECT 'ref'              AS type, 'Список'                                 AS note
 UNION SELECT 'ref_link'         AS type, 'Ссылка (обычная)'                       AS note
 UNION SELECT 'string'           AS type, 'Строковые значения'                     AS note
-UNION SELECT 'text'             AS type, 'Форматированный текст'                  AS note
+UNION SELECT 'TEXT'             AS type, 'Форматированный текст'                  AS note
 UNION SELECT 'time'             AS type, 'Время'                                  AS note
 UNION SELECT 'titleLink'        AS type, 'Ссылка с названием (ссылка||название)'  AS note
-UNION SELECT 'breadcrumbs'      AS type, 'Хлебные крошки'                         AS note
 UNION SELECT 'money'            AS type, 'Денежный'                               AS note
 UNION SELECT 'ref_tree'         AS type, 'Ссылка на классификатор'                AS note
 UNION SELECT 'parent_id'        AS type, 'Ссылка на родителя'                     AS note
@@ -647,15 +782,7 @@ UNION SELECT 'invisible'        AS type, 'Скрытый'                       
 CREATE VIEW meta.schema AS
   SELECT schemata.schema_name
      FROM information_schema.schemata
-  WHERE ((schemata.schema_name)::text <> ALL (ARRAY[('pg_toast'::character varying)::text, ('pg_temp_1'::character varying)::text, ('pg_toast_temp_1'::character varying)::text, ('pg_catalog'::character varying)::text, ('information_schema'::character varying)::text]));
---
---
---  
---
---
-CREATE VIEW meta.user_list AS
- SELECT pg_authid.rolname
-   FROM pg_authid;
+  WHERE ((schemata.schema_name)::TEXT <> ALL (ARRAY[('pg_toast'::character varying)::TEXT, ('pg_temp_1'::character varying)::TEXT, ('pg_toast_temp_1'::character varying)::TEXT, ('pg_catalog'::character varying)::TEXT, ('information_schema'::character varying)::TEXT]));
 --
 --
 --  
@@ -669,7 +796,7 @@ CREATE VIEW meta.view_entity AS
     entity.base_entity_id,
     entity.table_type
    FROM meta.entity
-  WHERE entity.schema_name <> ALL (ARRAY['ems'::text, 'meta'::text]);
+  WHERE entity.schema_name <> ALL (ARRAY['ems'::TEXT, 'meta'::TEXT]);
 --
 --
 --  
@@ -695,7 +822,7 @@ CREATE VIEW meta.view_page_block AS
             t1.entity_id,
             t1."order",
             t1.layout,
-            COALESCE(to_char(t1."order", '000'::text), '000'::text) AS path,
+            COALESCE(to_char(t1."order", '000'::TEXT), '000'::TEXT) AS path,
             1
            FROM meta.page_block t1
           WHERE (t1.parent_block_key IS NULL)
@@ -709,7 +836,7 @@ CREATE VIEW meta.view_page_block AS
             t2.entity_id,
             t2."order",
             t2.layout,
-            ((temp1_1.path || '->'::text) || COALESCE(to_char(t2."order", '000'::text), '000'::text)),
+            ((temp1_1.path || '->'::TEXT) || COALESCE(to_char(t2."order", '000'::TEXT), '000'::TEXT)),
             (temp1_1.level + 1)
            FROM (meta.page_block t2
              JOIN temp1 temp1_1 ON ((temp1_1.block_key = t2.parent_block_key)))
@@ -949,7 +1076,7 @@ BEGIN
         ON UPDATE NO ACTION ON DELETE NO ACTION;');
     ELSE -- добавление обычного поля
       IF new.data_type IS NULL THEN
-        new.data_type = 'text';
+        new.data_type = 'TEXT';
       END IF;
       EXECUTE 'ALTER TABLE '||new_entity||' add column '||new.column_name||'  '||new.data_type||'';
     END IF;
@@ -984,7 +1111,7 @@ BEGIN
       IF new.ref_entity IS NOT NULL AND (old.ref_entity<>new.ref_entity OR old.ref_entity IS NULL) THEN
         SELECT primarykey FROM meta.entity WHERE entity = new.ref_entity INTO new_ref_key;
         new_column_name := quote_ident(new.column_name);
-        new_ref_entity := quote_ident(meta.entity_to_schema(new.ref_entity)) || '.' || quote_ident(meta.entity_to_table(new.ref_entity::text));
+        new_ref_entity := quote_ident(meta.entity_to_schema(new.ref_entity)) || '.' || quote_ident(meta.entity_to_table(new.ref_entity::TEXT));
         new_entity := meta.entity_to_table(new.entity);
         EXECUTE('ALTER TABLE '||old_entity||' ADD CONSTRAINT "'||new_entity||'_'||new.column_name||'_fkey" FOREIGN KEY ("'||new.column_name||'")
           REFERENCES '||new_ref_entity||' ("'||new_ref_key||'") MATCH SIMPLE
@@ -1145,7 +1272,7 @@ CREATE FUNCTION meta.projection_property_update_trgf() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE
-_temp text;
+_temp TEXT;
 BEGIN
  UPDATE meta.projection_property_extra set 
         title = new.title, 
@@ -1202,19 +1329,11 @@ END;$$;
 
 
 
-CREATE FUNCTION meta.projection_redirect() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$BEGIN
-  new.projection_redirect := new.projection_name||'.'||new.role;
-  RETURN new;
-END;$$;
-
-
 CREATE FUNCTION meta.projection_relation_update_trgf() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE
-_temp_title text;
+_temp_title TEXT;
 BEGIN
 --  UPDATE meta.projection_relation_extra set 
 --     title = new.title, 
@@ -1285,9 +1404,9 @@ END;$$;
 CREATE FUNCTION meta.function_insert_trgf() RETURNS trigger
     LANGUAGE plpgsql
     AS $_$DECLARE
-  new_function_schema text;
-  new_function_name text;
-  new_function_code text;
+  new_function_schema TEXT;
+  new_function_name TEXT;
+  new_function_code TEXT;
 
 BEGIN
   new_function_schema := quote_ident(new.function_schema);
@@ -1295,7 +1414,7 @@ BEGIN
   new_function_code := quote_ident(new.function_code);
 
   EXECUTE '
-CREATE OR REPLACE FUNCTION ' || new.function_schema || '.' || new.function_name || ' (row_key uuid, user_key uuid) RETURNS text AS $BODY$' || new.function_code || '$BODY$ LANGUAGE plpgsql VOLATILE NOT LEAKPROOF';
+CREATE OR REPLACE FUNCTION ' || new.function_schema || '.' || new.function_name || ' (row_key uuid, user_key uuid) RETURNS TEXT AS $BODY$' || new.function_code || '$BODY$ LANGUAGE plpgsql VOLATILE NOT LEAKPROOF';
   RETURN new;
 END;$_$;
 
@@ -1304,9 +1423,9 @@ END;$_$;
 CREATE FUNCTION meta.function_update_trgf() RETURNS trigger
     LANGUAGE plpgsql
     AS $_$DECLARE
-  new_function_schema text;
-  new_function_name text;
-  new_function_code text;
+  new_function_schema TEXT;
+  new_function_name TEXT;
+  new_function_code TEXT;
 
 BEGIN
   new_function_schema := quote_ident(new.function_schema);
@@ -1315,7 +1434,7 @@ BEGIN
 
   PERFORM udf_dropfunction(old.function_name);
   EXECUTE '
-CREATE OR REPLACE FUNCTION ' || new.function_schema || '.' || new.function_name || ' (row_key uuid, user_key uuid) RETURNS text AS $BODY$' || new.function_code || '$BODY$ LANGUAGE plpgsql VOLATILE NOT LEAKPROOF';
+CREATE OR REPLACE FUNCTION ' || new.function_schema || '.' || new.function_name || ' (row_key uuid, user_key uuid) RETURNS TEXT AS $BODY$' || new.function_code || '$BODY$ LANGUAGE plpgsql VOLATILE NOT LEAKPROOF';
   RETURN new;
 END;$_$;
 
@@ -1325,8 +1444,8 @@ END;$_$;
 CREATE FUNCTION meta.grants_update_trgf() RETURNS trigger
     LANGUAGE plpgsql
     AS $$DECLARE
-  new_entity_id text;
-  new_groname text;
+  new_entity_id TEXT;
+  new_groname TEXT;
 
 BEGIN
   -- new_entity := quote_ident(new.entity);
@@ -1404,9 +1523,6 @@ CREATE TRIGGER function_update_trg INSTEAD OF UPDATE ON meta.functions FOR EACH 
 CREATE TRIGGER menu_item_tr BEFORE INSERT ON meta.menu_item FOR EACH ROW EXECUTE PROCEDURE meta.menu_item_insert_trgf();
 
 CREATE TRIGGER projection_property_update_trg INSTEAD OF INSERT OR UPDATE ON meta.projection_property FOR EACH ROW EXECUTE PROCEDURE meta.projection_property_update_trgf();
-
-CREATE TRIGGER projection_redirect_trg BEFORE INSERT OR UPDATE ON meta.projection_redirect FOR EACH ROW EXECUTE PROCEDURE meta.projection_redirect();
-
 
 --
 --

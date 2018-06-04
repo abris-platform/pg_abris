@@ -130,6 +130,16 @@ SELECT * FROM  meta.page_block_layout;
 --
 --
 --
+SELECT * FROM meta.entity_extra;
+SELECT * FROM meta.property_extra;
+SELECT * FROM meta.entity_extra;
+SELECT * FROM meta.relation_extra;
+--
+--
+--  Проверка menu
+--
+--
+--
 SELECT * FROM  meta.menu;
 --
 --
@@ -137,14 +147,12 @@ SELECT * FROM  meta.menu;
 --
 --
 SELECT * FROM  meta.property_add;
-SELECT * FROM  meta.user_list;
-
-SELECT * FROM  meta.view_entity;
 --
 --
 --  Проверка view
 --
 --
+SELECT * FROM  meta.view_entity;
 SELECT * FROM  meta.view_projection_entity;
 SELECT * FROM  meta.view_projection_property;
 SELECT * FROM  meta.view_projection_relation;
