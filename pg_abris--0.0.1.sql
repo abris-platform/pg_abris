@@ -276,34 +276,6 @@ CREATE TABLE meta.pivot (
 );
 
 
--- CREATE FUNCTION meta.entity_to_table(
---   parameter TEXT) 
---   RETURNS TEXT
---   LANGUAGE plpgsql
--- AS $$
--- DECLARE
---   result TEXT;
--- BEGIN
---   result := substring(parameter, '\.(\w*)'::TEXT);
---   RETURN result;
--- END;
--- $$;
-
-
-
--- CREATE FUNCTION meta.entity_to_schema(
---   parameter TEXT) 
---   RETURNS TEXT
---   LANGUAGE plpgsql
--- AS $$
--- DECLARE
---   result TEXT;
--- BEGIN
---   result := substring(parameter, '\w*'::TEXT);
---   RETURN result;
--- END;
--- $$;
-
 CREATE FUNCTION meta.clean() 
   RETURNS TEXT
   LANGUAGE plpgsql
@@ -740,40 +712,73 @@ UNION
 --  
 --
 --
-CREATE VIEW meta.page_block_layout AS
-        SELECT 0 AS layout, 'Нет'                       AS name 
-  UNION SELECT 1 AS layout, 'Вертикальная раскладка'    AS name
-  UNION SELECT 2 AS layout, 'Горизонтальная раскладка'  AS name;
+CREATE TABLE meta.page_block_layout (
+    layout  INTEGER NOT NULL
+  , name    TEXT
+  , CONSTRAINT page_block_layout_pkey PRIMARY KEY (layout)
+);
+COMMENT ON TABLE  meta.page_block_layout        IS 'Способы рамположения блоков';
+COMMENT ON COLUMN meta.page_block_layout.layout IS 'Тип расположения';
+COMMENT ON COLUMN meta.page_block_layout.name   IS 'Расположение';
 --
 --
-CREATE VIEW meta.entity_type AS
-        SELECT 'r' AS type, 'Таблица'       AS note
-  UNION SELECT 'v' AS type, 'Представление' AS note;
+INSERT INTO meta.page_block_layout VALUES (0, 'Нет'                     ); 
+INSERT INTO meta.page_block_layout VALUES (1, 'Вертикальная раскладка'  );
+INSERT INTO meta.page_block_layout VALUES (2, 'Горизонтальная раскладка');
 --
 --
-CREATE VIEW meta.property_type  AS
-      SELECT 'bool'             AS type, 'Истина или ложь'                        AS note
-UNION SELECT 'button'           AS type, 'Кнопка'                                 AS note
-UNION SELECT 'caption'          AS type, 'Заголовок'                              AS note
-UNION SELECT 'date'             AS type, 'Дата'                                   AS note
-UNION SELECT 'datetime'         AS type, 'Дата и время'                           AS note
-UNION SELECT 'file'             AS type, 'Файл'                                   AS note
-UNION SELECT 'INTEGER'          AS type, 'Целочисленное'                          AS note
-UNION SELECT 'address'          AS type, 'Адрес'                                  AS note
-UNION SELECT 'plain'            AS type, 'Текст без форматирования'               AS note
-UNION SELECT 'ref'              AS type, 'Список'                                 AS note
-UNION SELECT 'ref_link'         AS type, 'Ссылка (обычная)'                       AS note
-UNION SELECT 'string'           AS type, 'Строковые значения'                     AS note
-UNION SELECT 'TEXT'             AS type, 'Форматированный текст'                  AS note
-UNION SELECT 'time'             AS type, 'Время'                                  AS note
-UNION SELECT 'titleLink'        AS type, 'Ссылка с названием (ссылка||название)'  AS note
-UNION SELECT 'money'            AS type, 'Денежный'                               AS note
-UNION SELECT 'ref_tree'         AS type, 'Ссылка на классификатор'                AS note
-UNION SELECT 'parent_id'        AS type, 'Ссылка на родителя'                     AS note
-UNION SELECT 'row_color'        AS type, 'Цвет строки'                            AS note
-UNION SELECT 'filedb'           AS type, 'Файл в базе'                            AS note
-UNION SELECT 'progress'         AS type, 'Горизонтальный индикатор'               AS note
-UNION SELECT 'invisible'        AS type, 'Скрытый'                                AS note;
+--  
+--
+--
+CREATE TABLE meta.entity_type (
+    type  CHARACTER
+  , note  TEXT
+  , CONSTRAINT entity_type_pkey PRIMARY KEY (type)
+);
+COMMENT ON TABLE  meta.entity_type      IS 'Типы сущьностей';
+COMMENT ON COLUMN meta.entity_type.type IS 'Тип';
+COMMENT ON COLUMN meta.entity_type.note IS 'Наименование';
+--
+--
+INSERT INTO meta.entity_type VALUES ('r', 'Таблица');
+INSERT INTO meta.entity_type VALUES ('v', 'Представление');
+--
+--
+--  
+--
+--
+CREATE TABLE meta.property_type (
+    type    TEXT
+  , note    TEXT
+  , CONSTRAINT property_type_pkey PRIMARY KEY (type)
+);
+COMMENT ON TABLE  meta.property_type      IS 'Типы свойст';
+COMMENT ON COLUMN meta.property_type.type IS 'Тип';
+COMMENT ON COLUMN meta.property_type.note IS 'Наименование';
+--
+--
+INSERT INTO meta.property_type VALUES ('bool'      , 'Истина или ложь'                      );
+INSERT INTO meta.property_type VALUES ('button'    , 'Кнопка'                               );
+INSERT INTO meta.property_type VALUES ('caption'   , 'Заголовок'                            );
+INSERT INTO meta.property_type VALUES ('date'      , 'Дата'                                 );
+INSERT INTO meta.property_type VALUES ('datetime'  , 'Дата и время'                         );
+INSERT INTO meta.property_type VALUES ('file'      , 'Файл'                                 );
+INSERT INTO meta.property_type VALUES ('INTEGER'   , 'Целочисленное'                        );
+INSERT INTO meta.property_type VALUES ('address'   , 'Адрес'                                );
+INSERT INTO meta.property_type VALUES ('plain'     , 'Текст без форматирования'             );
+INSERT INTO meta.property_type VALUES ('ref'       , 'Список'                               );
+INSERT INTO meta.property_type VALUES ('ref_link'  , 'Ссылка (обычная)'                     );
+INSERT INTO meta.property_type VALUES ('string'    , 'Строковые значения'                   );
+INSERT INTO meta.property_type VALUES ('TEXT'      , 'Форматированный текст'                );
+INSERT INTO meta.property_type VALUES ('time'      , 'Время'                                );
+INSERT INTO meta.property_type VALUES ('titleLink' , 'Ссылка с названием (ссылка||название)');
+INSERT INTO meta.property_type VALUES ('money'     , 'Денежный'                             );
+INSERT INTO meta.property_type VALUES ('ref_tree'  , 'Ссылка на классификатор'              );
+INSERT INTO meta.property_type VALUES ('parent_id' , 'Ссылка на родителя'                   );
+INSERT INTO meta.property_type VALUES ('row_color' , 'Цвет строки'                          );
+INSERT INTO meta.property_type VALUES ('filedb'    , 'Файл в базе'                          );
+INSERT INTO meta.property_type VALUES ('progress'  , 'Горизонтальный индикатор'             );
+INSERT INTO meta.property_type VALUES ('invisible' , 'Скрытый'                              );;
 --
 --
 --  
