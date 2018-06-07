@@ -2,3 +2,9 @@ pg_abris-0.0.1-1-x86_64.pkg.tar
 regression.diffs
 regression.out
 results/
+debian/debhelper-build-stamp
+debian/files
+debian/*.substvars
+debian/.debhelper
+debian/pg-abris-deb
+debian/result
