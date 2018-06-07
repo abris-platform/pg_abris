@@ -19,14 +19,14 @@ CREATE TABLE meta.entity_extra (
   , b_table         TEXT           -- Базовая таблица (для переноса между базами)
   , CONSTRAINT entity_extra_pkey PRIMARY KEY (entity_id)
 );
-COMMENT ON TABLE  meta.entity_extra        IS 'Дополнительные параметры сущьностей';
+COMMENT ON TABLE  meta.entity_extra        IS 'Дополнительные параметры Сущностей';
 COMMENT ON COLUMN meta.entity_extra.entity_id       IS 'Идентификатор';
 COMMENT ON COLUMN meta.entity_extra.primarykey      IS 'Ключевое поле';
-COMMENT ON COLUMN meta.entity_extra.base_entity_id  IS 'Сущьность для добавления';
+COMMENT ON COLUMN meta.entity_extra.base_entity_id  IS 'Сущность для добавления';
 COMMENT ON COLUMN meta.entity_extra.e_schema        IS 'Схема';
 COMMENT ON COLUMN meta.entity_extra.e_table         IS 'Таблица';
-COMMENT ON COLUMN meta.entity_extra.b_schema        IS 'Схема сущьности для добавления';
-COMMENT ON COLUMN meta.entity_extra.b_table         IS 'Таблица сущьности для добавления';
+COMMENT ON COLUMN meta.entity_extra.b_schema        IS 'Схема Сущности для добавления';
+COMMENT ON COLUMN meta.entity_extra.b_table         IS 'Таблица Сущности для добавления';
 --
 --
 CREATE FUNCTION meta.entity_ex_trgf() RETURNS trigger
@@ -75,8 +75,8 @@ CREATE TABLE meta.property_extra (
 COMMENT ON TABLE  meta.property_extra                 IS 'Дополнительные параметры колонок';
 COMMENT ON COLUMN meta.property_extra.property_name   IS 'Идентификатор';
 COMMENT ON COLUMN meta.property_extra.type            IS 'Тип для отображения';
-COMMENT ON COLUMN meta.property_extra.ref_entity      IS 'Зависимая сущьность';
-COMMENT ON COLUMN meta.property_extra.ref_key         IS 'Ключ в зависимой сущьности';
+COMMENT ON COLUMN meta.property_extra.ref_entity      IS 'Зависимая Сущность';
+COMMENT ON COLUMN meta.property_extra.ref_key         IS 'Ключ в зависимой Сущности';
 COMMENT ON COLUMN meta.property_extra.e_schema        IS 'Схема';
 COMMENT ON COLUMN meta.property_extra.e_table         IS 'Таблица';
 COMMENT ON COLUMN meta.property_extra.p_name          IS 'Ограничение';
@@ -130,8 +130,8 @@ CREATE TABLE meta.relation_extra (
 );
 COMMENT ON TABLE  meta.relation_extra        IS 'Дополнительные параметры ограничений';
 COMMENT ON COLUMN  meta.relation_extra.relation_name   IS 'Идентификатор';
-COMMENT ON COLUMN  meta.relation_extra.entity_id       IS 'Базовая сущьность';
-COMMENT ON COLUMN  meta.relation_extra.relation_entity IS 'Подсоединяемая сущьность';
+COMMENT ON COLUMN  meta.relation_extra.entity_id       IS 'Базовая Сущность';
+COMMENT ON COLUMN  meta.relation_extra.relation_entity IS 'Подсоединяемая Сущность';
 COMMENT ON COLUMN  meta.relation_extra.key             IS 'Ключевое поле в базовой сущиности';
 COMMENT ON COLUMN  meta.relation_extra.title           IS 'Заголовок';
 COMMENT ON COLUMN  meta.relation_extra.e_schema        IS 'Базовая схема';
@@ -195,7 +195,7 @@ COMMENT ON COLUMN  meta.projection_extra.title           IS 'Заголовок'
 COMMENT ON COLUMN  meta.projection_extra.jump            IS 'Проекция для перехода';
 COMMENT ON COLUMN  meta.projection_extra.additional      IS 'Дополнительные параметры';
 COMMENT ON COLUMN  meta.projection_extra.readonly        IS 'Неизменяемость';
-COMMENT ON COLUMN  meta.projection_extra.entity_id       IS 'Сущьность';
+COMMENT ON COLUMN  meta.projection_extra.entity_id       IS 'Сущность';
 COMMENT ON COLUMN  meta.projection_extra.hint            IS 'Подсказка';
 COMMENT ON COLUMN  meta.projection_extra.e_schema        IS 'Схема';
 COMMENT ON COLUMN  meta.projection_extra.e_table         IS 'Таблица';
@@ -283,7 +283,7 @@ COMMENT ON COLUMN  meta.projection_relation_extra.related_projection_name   IS '
 COMMENT ON COLUMN  meta.projection_relation_extra.opened                    IS 'Открытость';
 COMMENT ON COLUMN  meta.projection_relation_extra._order                    IS 'Порядок';
 COMMENT ON COLUMN  meta.projection_relation_extra.view_id                   IS 'Шаблон отображения';
-COMMENT ON COLUMN  meta.projection_relation_extra.relation_entity           IS 'Зависимая сущьность';
+COMMENT ON COLUMN  meta.projection_relation_extra.relation_entity           IS 'Зависимая Сущность';
 COMMENT ON COLUMN  meta.projection_relation_extra.projection_relation_name  IS 'Зависимая проекция';
 COMMENT ON COLUMN  meta.projection_relation_extra.hint                      IS 'Подсказка';
 
@@ -391,7 +391,7 @@ COMMENT ON COLUMN  meta.page_block.size_percent      IS 'Размер в про�
 COMMENT ON COLUMN  meta.page_block.parent_block_key  IS 'Родительский блок';
 COMMENT ON COLUMN  meta.page_block.view_id           IS 'Шаблон для отображения';
 COMMENT ON COLUMN  meta.page_block.projection_name   IS 'Проекция';
-COMMENT ON COLUMN  meta.page_block.entity_id         IS 'Сущьность';
+COMMENT ON COLUMN  meta.page_block.entity_id         IS 'Сущность';
 COMMENT ON COLUMN  meta.page_block._order            IS 'Порядок';
 COMMENT ON COLUMN  meta.page_block.layout            IS 'Размещение';
 
@@ -494,7 +494,7 @@ UNION ALL
     AND (n.nspname <> ALL (ARRAY['pg_catalog', 'information_schema']));
 --
 --
-COMMENT ON VIEW   meta.entity                 IS 'Сущьности';
+COMMENT ON VIEW   meta.entity                 IS 'Сущности';
 COMMENT ON COLUMN meta.entity.entity_id       IS 'Идентификатор';
 COMMENT ON COLUMN meta.entity.schema_name     IS 'Схема';
 COMMENT ON COLUMN meta.entity.table_name      IS 'Таблица';
@@ -502,8 +502,8 @@ COMMENT ON COLUMN meta.entity.title           IS 'Заголовок';
 COMMENT ON COLUMN meta.entity.primarykey      IS 'Первичный ключ';
 COMMENT ON COLUMN meta.entity.table_type      IS 'Тип';
 COMMENT ON COLUMN meta.entity.view_definition IS 'Описание (только для представления)';
-COMMENT ON COLUMN meta.entity.base_entity_key IS 'Ключ сущьности в которую будут добавлениы дополнительные свойства';
-COMMENT ON COLUMN meta.entity.base_entity_id  IS 'Сущьность в которую будут добавлениы дополнительные свойства';
+COMMENT ON COLUMN meta.entity.base_entity_key IS 'Ключ Сущности в которую будут добавлениы дополнительные свойства';
+COMMENT ON COLUMN meta.entity.base_entity_id  IS 'Сущность в которую будут добавлениы дополнительные свойства';
 --
 --
 CREATE FUNCTION meta.entity_trgf() RETURNS trigger
@@ -676,14 +676,14 @@ CREATE VIEW meta.property AS
 COMMENT ON VIEW   meta.property                 IS 'Колонки';
 COMMENT ON COLUMN meta.property.property_name   IS 'Идентификатор';
 COMMENT ON COLUMN meta.property.column_name     IS 'Наименование';
-COMMENT ON COLUMN meta.property.entity_id       IS 'Идентификатор сущьности';
+COMMENT ON COLUMN meta.property.entity_id       IS 'Идентификатор Сущности';
 COMMENT ON COLUMN meta.property.type            IS 'Тип при отображении';
 COMMENT ON COLUMN meta.property.data_type       IS 'Тип в базе данных';
 COMMENT ON COLUMN meta.property.visible         IS 'Видимость';
 COMMENT ON COLUMN meta.property.readonly        IS 'Нередактируемость';
 COMMENT ON COLUMN meta.property.title           IS 'Заголовок';
-COMMENT ON COLUMN meta.property.ref_entity      IS 'Связанныя сущьность';
-COMMENT ON COLUMN meta.property.ref_key         IS 'Ключ связанной сущьности';
+COMMENT ON COLUMN meta.property.ref_entity      IS 'Связанныя Сущность';
+COMMENT ON COLUMN meta.property.ref_key         IS 'Ключ связанной Сущности';
 COMMENT ON COLUMN meta.property._order          IS 'Порядок';
 COMMENT ON COLUMN meta.property.constraint_name IS 'Имя ограничения';
 COMMENT ON COLUMN meta.property.is_nullable     IS 'Необязательность';
@@ -874,14 +874,14 @@ UNION
 COMMENT ON VIEW   meta.property_add                 IS 'Дополнительные колонки';
 COMMENT ON COLUMN meta.property_add.property_name   IS 'Идентификатор';
 COMMENT ON COLUMN meta.property_add.column_name     IS 'Наименование';
-COMMENT ON COLUMN meta.property_add.entity_id       IS 'Идентификатор сущьности';
+COMMENT ON COLUMN meta.property_add.entity_id       IS 'Идентификатор Сущности';
 COMMENT ON COLUMN meta.property_add.type            IS 'Тип при отображении';
 COMMENT ON COLUMN meta.property_add.data_type       IS 'Тип в базе данных';
 COMMENT ON COLUMN meta.property_add.visible         IS 'Видимость';
 COMMENT ON COLUMN meta.property_add.readonly        IS 'Нередактируемость';
 COMMENT ON COLUMN meta.property_add.title           IS 'Заголовок';
-COMMENT ON COLUMN meta.property_add.ref_entity      IS 'Связанныя сущьность';
-COMMENT ON COLUMN meta.property_add.ref_key         IS 'Ключ связанной сущьности';
+COMMENT ON COLUMN meta.property_add.ref_entity      IS 'Связанныя Сущность';
+COMMENT ON COLUMN meta.property_add.ref_key         IS 'Ключ связанной Сущности';
 COMMENT ON COLUMN meta.property_add._order          IS 'Порядок';
 COMMENT ON COLUMN meta.property_add.is_nullable     IS 'Необязательность';
 COMMENT ON COLUMN meta.property_add."default"       IS 'Значение по умолчанию';
@@ -917,8 +917,8 @@ UNION
 --
 COMMENT ON VIEW   meta.relation                 IS 'Ограничения';
 COMMENT ON COLUMN meta.relation.relation_name   IS 'Идентификатор';
-COMMENT ON COLUMN meta.relation.entity_id       IS 'Сущьность';
-COMMENT ON COLUMN meta.relation.relation_entity IS 'Зависимая сущьность';
+COMMENT ON COLUMN meta.relation.entity_id       IS 'Сущность';
+COMMENT ON COLUMN meta.relation.relation_entity IS 'Зависимая Сущность';
 COMMENT ON COLUMN meta.relation.title           IS 'Заголовок';
 COMMENT ON COLUMN meta.relation.key             IS 'Ключевое поле';
 COMMENT ON COLUMN meta.relation.virtual         IS 'Виртуализация';
@@ -1046,14 +1046,14 @@ CREATE VIEW meta.projection AS
 --
 COMMENT ON VIEW   meta.projection                 IS 'Проекции';
 COMMENT ON COLUMN meta.projection.projection_name IS 'Проекция';
-COMMENT ON COLUMN meta.projection.entity_id       IS 'Сущьность';
+COMMENT ON COLUMN meta.projection.entity_id       IS 'Сущность';
 COMMENT ON COLUMN meta.projection.base            IS 'Базовость';
 COMMENT ON COLUMN meta.projection.title           IS 'Заголовок';
 COMMENT ON COLUMN meta.projection.jump            IS 'Переход';
 COMMENT ON COLUMN meta.projection.primarykey      IS 'Первичный ключ';
 COMMENT ON COLUMN meta.projection.additional      IS 'Дополнительные параметры';
 COMMENT ON COLUMN meta.projection.readonly        IS 'Нередактируемость';
-COMMENT ON COLUMN meta.projection.base_entity_id  IS 'Базовая сущьность';
+COMMENT ON COLUMN meta.projection.base_entity_id  IS 'Базовая Сущность';
 COMMENT ON COLUMN meta.projection.hint            IS 'Подсказка';
 --
 --  
@@ -1252,8 +1252,8 @@ COMMENT ON COLUMN meta.projection_relation.related_projection_name  IS 'Зави
 COMMENT ON COLUMN meta.projection_relation.readonly                 IS 'Нередактируемость';
 COMMENT ON COLUMN meta.projection_relation.visible                  IS 'Видимость';
 COMMENT ON COLUMN meta.projection_relation.projection_name          IS 'Проекция';
-COMMENT ON COLUMN meta.projection_relation.relation_entity          IS 'Зависимя сущьность';
-COMMENT ON COLUMN meta.projection_relation.entity_id                IS 'Сущьность';
+COMMENT ON COLUMN meta.projection_relation.relation_entity          IS 'Зависимя Сущность';
+COMMENT ON COLUMN meta.projection_relation.entity_id                IS 'Сущность';
 COMMENT ON COLUMN meta.projection_relation.key                      IS 'Ключевое поле';
 COMMENT ON COLUMN meta.projection_relation.opened                   IS 'Открытость';
 COMMENT ON COLUMN meta.projection_relation._order                  IS 'Порядок';
@@ -1421,7 +1421,7 @@ CREATE TABLE meta.entity_type (
   , note  TEXT
   , CONSTRAINT entity_type_pkey PRIMARY KEY (type)
 );
-COMMENT ON TABLE  meta.entity_type      IS 'Типы сущьностей';
+COMMENT ON TABLE  meta.entity_type      IS 'Типы Сущностей';
 COMMENT ON COLUMN meta.entity_type.type IS 'Тип';
 COMMENT ON COLUMN meta.entity_type.note IS 'Наименование';
 --
@@ -1741,10 +1741,10 @@ CREATE TRIGGER function_update_trg INSTEAD OF UPDATE ON meta.functions FOR EACH 
 --CREATE TRIGGER grants_update_trg INSTEAD OF UPDATE ON meta.grants FOR EACH ROW EXECUTE PROCEDURE meta.grants_update_trgf();
 
 --
-INSERT INTO meta.relation_extra VALUES('null', NULL, NULL, 'base_entity_id',  'Добовляемые сущьности','meta', 'entity',   'meta', 'entity');
+INSERT INTO meta.relation_extra VALUES('null', NULL, NULL, 'base_entity_id',  'Добовляемые Сущности','meta', 'entity',   'meta', 'entity');
 --
-INSERT INTO meta.relation_extra VALUES('null', NULL, NULL, 'entity_id',       'Сущьности',            'meta', 'property', 'meta', 'entity');
-INSERT INTO meta.relation_extra VALUES('null', NULL, NULL, 'ref_entity',      'Зависимые сущьности',  'meta', 'property', 'meta', 'entity');
+INSERT INTO meta.relation_extra VALUES('null', NULL, NULL, 'entity_id',       'Сущности',            'meta', 'property', 'meta', 'entity');
+INSERT INTO meta.relation_extra VALUES('null', NULL, NULL, 'ref_entity',      'Зависимые Сущности',  'meta', 'property', 'meta', 'entity');
 --
 INSERT INTO meta.relation_extra VALUES('null', NULL, NULL, 'entity_id',       'Зависимости из ...',   'meta', 'relation', 'meta', 'entity');
 INSERT INTO meta.relation_extra VALUES('null', NULL, NULL, 'relation_entity', 'Зависимости в ...',    'meta', 'relation', 'meta', 'entity');
