@@ -1565,17 +1565,19 @@ CREATE VIEW meta.view_projection_buttons AS
 --  
 --
 --
-CREATE VIEW meta.view_projection_entity AS
+CREATE OR REPLACE VIEW meta.view_projection_entity AS
  SELECT projection.projection_name,
-    -- projection.table_name,
-    -- projection.table_schema,
     projection.title,
     projection.jump,
     projection.primarykey,
     projection.additional,
     projection.readonly,
-    projection.hint
-   FROM meta.projection;
+    projection.hint,
+    n.nspname AS table_schema,
+    v.relname AS table_name
+   FROM meta.projection
+     LEFT JOIN (pg_class v
+     LEFT JOIN pg_namespace n ON n.oid = v.relnamespace) ON v.oid = projection.entity_id;
 --
 --
 --  
@@ -1728,6 +1730,20 @@ END;$$;
 
 
 
+
+CREATE FUNCTION meta.create_menu() 
+  RETURNS TEXT
+  LANGUAGE plpgsql
+AS $$
+BEGIN
+  truncate meta.menu_item;
+  insert into meta.menu_item (name, title) SELECT schema_name, schema_name 
+    FROM meta.schema;
+  insert into meta.menu_item (name, parent, title, projection) SELECT table_name, schema_name, title, table_name 
+    FROM meta.entity;
+  RETURN 'Меню сформировано';
+END;$$;
+    
 
 
 CREATE INDEX fki_menu_item_fk ON meta.menu_item USING btree (parent);
