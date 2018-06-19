@@ -6,6 +6,28 @@ CREATE SCHEMA meta;
 
 --
 --
+--  
+--
+--
+CREATE TABLE meta.type_match (
+    data_type_id  OID
+  , property_type TEXT
+  , CONSTRAINT type_match_pkey PRIMARY KEY (data_type_id)
+);
+COMMENT ON TABLE  meta.type_match               IS 'Соответствие типов';
+COMMENT ON COLUMN meta.type_match.data_type_id  IS 'Тип в базе данных';
+COMMENT ON COLUMN meta.type_match.property_type IS 'Тип при отображении';
+--
+--
+INSERT INTO meta.type_match VALUES (16, 'bool');
+INSERT INTO meta.type_match VALUES (23 , 'integer');
+
+INSERT INTO meta.type_match VALUES (21 , 'integer');
+INSERT INTO meta.type_match VALUES (1082 , 'date');
+INSERT INTO meta.type_match VALUES (1184 , 'datetime');
+INSERT INTO meta.type_match VALUES (1114 , 'datetime');
+--
+--
 --  extra
 --
 --
@@ -126,6 +148,7 @@ CREATE TABLE meta.relation_extra (
   , e_table         TEXT           -- Таблица (для переноса между базами)
   , r_schema        TEXT           -- Базовая схема (для переноса между базами)
   , r_table         TEXT           -- Базовая таблица (для переноса между базами)
+  , ref_key         TEXT
   , CONSTRAINT relation_extra_pkey PRIMARY KEY (relation_name)
 );
 COMMENT ON TABLE  meta.relation_extra        IS 'Дополнительные параметры ограничений';
@@ -138,6 +161,7 @@ COMMENT ON COLUMN  meta.relation_extra.e_schema        IS 'Базовая схе
 COMMENT ON COLUMN  meta.relation_extra.e_table         IS 'Базовая таблица';
 COMMENT ON COLUMN  meta.relation_extra.r_schema        IS 'Подсоединяемая схема';
 COMMENT ON COLUMN  meta.relation_extra.r_table         IS 'Подсоединяемая таблица';
+COMMENT ON COLUMN  meta.relation_extra.ref_key         IS 'Ключ для связи';
 --
 --
 CREATE FUNCTION meta.relation_ex_trgf() RETURNS trigger
@@ -153,7 +177,7 @@ BEGIN
       INTO new.entity_id;
     SELECT v.oid  
       FROM pg_class v LEFT JOIN pg_namespace n ON n.oid = v.relnamespace 
-      WHERE n.nspname = new.e_schema AND v.relname = new.e_table 
+      WHERE n.nspname = new.r_schema AND v.relname = new.r_table 
       INTO new.relation_entity;
     new.relation_name = new.entity_id ||'_'||new.relation_entity||'_'||new.key;
   ELSE
@@ -436,8 +460,7 @@ CREATE VIEW  meta.entity AS
     COALESCE(ee.primarykey, b.base_entity_key)  AS primarykey,
     v.relkind::TEXT                             AS table_type,
     pg_get_viewdef(v.oid)::TEXT                 AS view_definition,
-    b.base_entity_key                           AS base_entity_key,
-    b.base_entity_id                            AS base_entity_id
+    COALESCE(ee.base_entity_id,b.base_entity_id)AS base_entity_id
   FROM pg_class v
     LEFT JOIN pg_namespace n ON n.oid = v.relnamespace
     LEFT JOIN 
@@ -479,7 +502,6 @@ UNION ALL
     at.attname                                  AS primarykey,
     r.relkind::TEXT                             AS table_type,
     NULL::TEXT                                  AS view_definition,
-    NULL::name                                  AS base_entity_key,
     NULL::oid                                   AS base_entity_id
   FROM pg_class r
     LEFT JOIN pg_namespace n ON n.oid = r.relnamespace
@@ -501,9 +523,8 @@ COMMENT ON COLUMN meta.entity.table_name      IS 'Таблица';
 COMMENT ON COLUMN meta.entity.title           IS 'Заголовок';
 COMMENT ON COLUMN meta.entity.primarykey      IS 'Первичный ключ';
 COMMENT ON COLUMN meta.entity.table_type      IS 'Тип';
-COMMENT ON COLUMN meta.entity.view_definition IS 'Описание (только для представления)';
-COMMENT ON COLUMN meta.entity.base_entity_key IS 'Ключ Сущности в которую будут добавлениы дополнительные свойства';
-COMMENT ON COLUMN meta.entity.base_entity_id  IS 'Сущность в которую будут добавлениы дополнительные свойства';
+COMMENT ON COLUMN meta.entity.view_definition IS 'Описание';
+COMMENT ON COLUMN meta.entity.base_entity_id  IS 'Добовляемая сущность';
 --
 --
 CREATE FUNCTION meta.entity_trgf() RETURNS trigger
@@ -609,11 +630,18 @@ CREATE VIEW meta.property AS
     a.attname::TEXT                                                 AS column_name,
     c.oid                                                           AS entity_id,
     COALESCE(
+      CASE
+        WHEN re.ref_key IS NOT NULL THEN 'ref'
+        ELSE NULL
+	    END,
+      COALESCE(
         CASE
             WHEN co.conkey[1] IS NOT NULL THEN 'ref'
             WHEN a.atttypid = 2950::oid THEN 'invisible'
             ELSE NULL::TEXT
-        END, 'string')                                              AS type,
+        END, COALESCE(type_match.property_type, 'string')
+      )
+    )                                                               AS type,
     CASE
       WHEN t.typtype = 'd' THEN
         CASE
@@ -635,16 +663,17 @@ CREATE VIEW meta.property AS
         END
       END::information_schema.character_data                        AS data_type,
     true                                                            AS visible,
-    CASE
-      WHEN (c.relkind = ANY (ARRAY['f', 'p'])) 
-        OR (c.relkind = ANY (ARRAY['v', 'r'])) 
-        AND NOT pg_column_is_updatable(c.oid::regclass, a.attnum, false) 
-        THEN true
-        ELSE false
-    END                                                             AS readonly,
+    -- CASE
+    --   WHEN (c.relkind = ANY (ARRAY['f', 'p'])) 
+    --     OR (c.relkind = ANY (ARRAY['v', 'r'])) 
+    --     AND NOT pg_column_is_updatable(c.oid::regclass, a.attnum, false) 
+    --     THEN true
+    --     ELSE false
+    -- END                                                             AS readonly,
+    FALSE                                                           AS readonly,
     COALESCE(d.description, a.attname::TEXT)                        AS title,
-    COALESCE(pe.ref_entity, r.oid)                                  AS ref_entity,
-    COALESCE(pe.ref_key, at.attname::TEXT)::TEXT                    AS ref_key,
+    COALESCE(pe.ref_entity ,COALESCE(re.entity_id, r.oid))          AS ref_entity,
+    COALESCE(pe.ref_key ,COALESCE(re.key, at.attname::TEXT))::TEXT  AS ref_key,
     a.attnum * 10                                                   AS _order,
     co.conname::information_schema.sql_identifier                   AS constraint_name,
     NOT (a.attnotnull OR t.typtype = 'd'::"char" AND t.typnotnull)  AS is_nullable,
@@ -665,6 +694,8 @@ CREATE VIEW meta.property AS
       ON r.oid = co.confrelid) 
       ON c.oid = co.conrelid AND co.contype = 'f'::"char" AND a.attnum = co.conkey[1]
     LEFT JOIN pg_description d ON a.attnum = d.objsubid AND a.attrelid = d.objoid
+    LEFT JOIN meta.type_match ON a.atttypid = type_match.data_type_id
+  	LEFT JOIN meta.relation_extra re ON re.relation_entity = c.oid AND re.ref_key = a.attname  
   WHERE a.attnum > 0 
     AND NOT a.attisdropped 
     AND (c.relkind = ANY (ARRAY['r'::"char", 'v'::"char", 'f'::"char", 'p'::"char"])) 
@@ -841,7 +872,7 @@ CREATE VIEW meta.property_add AS
     )::TEXT                       AS data_type,
     entity.entity_id              AS ref_entity,
     '~' || a.attname              AS column_name,
-    entity.base_entity_key::TEXT  AS ref_key,
+    entity.primarykey::TEXT       AS ref_key,
     a.attnum * 10 + 1000          AS _order,
     true                          AS virtual,
     (a.attname)::TEXT             AS original_column_name,
@@ -1079,7 +1110,7 @@ BEGIN
         hint = new.hint 
       WHERE projection_extra.projection_name = new.projection_name;
     INSERT INTO meta.projection_extra(projection_name, entity_id, title , jump, additional, readonly, hint) 
-      SELECT new.projection_name, new.entity, new.title, new.jump, new.additional, new.readonly, new.hint WHERE NOT exists
+      SELECT new.projection_name, new.entity_id, new.title, new.jump, new.additional, new.readonly, new.hint WHERE NOT exists
       (SELECT * FROM  meta.projection_extra WHERE projection_extra.projection_name = new.projection_name);
     RETURN new;
   END IF;
@@ -1449,7 +1480,7 @@ INSERT INTO meta.property_type VALUES ('caption'   , 'Заголовок'       
 INSERT INTO meta.property_type VALUES ('date'      , 'Дата'                                 );
 INSERT INTO meta.property_type VALUES ('datetime'  , 'Дата и время'                         );
 INSERT INTO meta.property_type VALUES ('file'      , 'Файл'                                 );
-INSERT INTO meta.property_type VALUES ('INTEGER'   , 'Целочисленное'                        );
+INSERT INTO meta.property_type VALUES ('integer'   , 'Целочисленное'                        );
 INSERT INTO meta.property_type VALUES ('address'   , 'Адрес'                                );
 INSERT INTO meta.property_type VALUES ('plain'     , 'Текст без форматирования'             );
 INSERT INTO meta.property_type VALUES ('ref'       , 'Список'                               );
@@ -1464,16 +1495,29 @@ INSERT INTO meta.property_type VALUES ('parent_id' , 'Ссылка на роди
 INSERT INTO meta.property_type VALUES ('row_color' , 'Цвет строки'                          );
 INSERT INTO meta.property_type VALUES ('filedb'    , 'Файл в базе'                          );
 INSERT INTO meta.property_type VALUES ('progress'  , 'Горизонтальный индикатор'             );
-INSERT INTO meta.property_type VALUES ('invisible' , 'Скрытый'                              );;
+INSERT INTO meta.property_type VALUES ('invisible' , 'Скрытый'                              );
+
+
 --
 --
 --  
 --
 --
-CREATE VIEW meta.schema AS
-  SELECT schemata.schema_name
-     FROM information_schema.schemata
-  WHERE ((schemata.schema_name)::TEXT <> ALL (ARRAY[('pg_toast'::character varying)::TEXT, ('pg_temp_1'::character varying)::TEXT, ('pg_toast_temp_1'::character varying)::TEXT, ('pg_catalog'::character varying)::TEXT, ('information_schema'::character varying)::TEXT]));
+--DROP VIEW meta.schema;
+
+CREATE OR REPLACE VIEW meta.schema AS
+SELECT 
+	n.oid 		AS schema_id, 
+	n.nspname	AS schema_name, 
+	COALESCE(obj_description(n.oid), n.nspname) AS title
+    FROM pg_catalog.pg_namespace n
+	WHERE  n.nspname <> ALL (ARRAY['pg_catalog', 'information_schema', 'pg_toast', 'pg_temp_1', 'pg_toast_temp_1']);
+
+
+-- CREATE VIEW meta.schema AS
+--   SELECT schemata.schema_name
+--      FROM information_schema.schemata
+--   WHERE ((schemata.schema_name)::TEXT <> ALL (ARRAY[('pg_toast'::character varying)::TEXT, ('pg_temp_1'::character varying)::TEXT, ('pg_toast_temp_1'::character varying)::TEXT, ('pg_catalog'::character varying)::TEXT, ('information_schema'::character varying)::TEXT]));
 --
 --
 --  
@@ -1737,10 +1781,26 @@ CREATE FUNCTION meta.create_menu()
 AS $$
 BEGIN
   truncate meta.menu_item;
-  insert into meta.menu_item (name, title) SELECT schema_name, schema_name 
-    FROM meta.schema;
-  insert into meta.menu_item (name, parent, title, projection) SELECT table_name, schema_name, title, table_name 
-    FROM meta.entity;
+  INSERT INTO meta.menu_item (name, title, _order) 
+    SELECT 
+      schema_name, 
+      schema_name, 
+      (SELECT count(1) 
+        FROM meta.schema s1   
+        WHERE s1.schema_name <= s.schema_name 
+       ) AS _order
+    FROM meta.schema s ORDER BY schema_name;
+  INSERT INTO meta.menu_item (name, parent, title, projection, _order) 
+    SELECT 
+      table_name, 
+      schema_name, 
+      title, 
+      table_name,
+      (SELECT count(1) 
+        FROM meta.entity e1   
+        WHERE e1.title <= e.title 
+      ) AS _order
+    FROM meta.entity e ORDER BY title;
   RETURN 'Меню сформировано';
 END;$$;
     
@@ -1756,11 +1816,41 @@ CREATE TRIGGER function_update_trg INSTEAD OF UPDATE ON meta.functions FOR EACH 
 
 --CREATE TRIGGER grants_update_trg INSTEAD OF UPDATE ON meta.grants FOR EACH ROW EXECUTE PROCEDURE meta.grants_update_trgf();
 
---
-INSERT INTO meta.relation_extra VALUES('null', NULL, NULL, 'base_entity_id',  'Добовляемые Сущности','meta', 'entity',   'meta', 'entity');
---
-INSERT INTO meta.relation_extra VALUES('null', NULL, NULL, 'entity_id',       'Сущности',            'meta', 'property', 'meta', 'entity');
-INSERT INTO meta.relation_extra VALUES('null', NULL, NULL, 'ref_entity',      'Зависимые Сущности',  'meta', 'property', 'meta', 'entity');
---
-INSERT INTO meta.relation_extra VALUES('null', NULL, NULL, 'entity_id',       'Зависимости из ...',   'meta', 'relation', 'meta', 'entity');
-INSERT INTO meta.relation_extra VALUES('null', NULL, NULL, 'relation_entity', 'Зависимости в ...',    'meta', 'relation', 'meta', 'entity');
+
+
+
+
+-- INSERT INTO meta.entity_extra(
+-- 	entity_id, primarykey, base_entity_id, e_schema, e_table, b_schema, b_table)
+-- 	VALUES (null, 'entity_id', null, 'meta', 'entity', null, null);
+
+-- INSERT INTO meta.entity_extra(
+-- 	entity_id, primarykey, base_entity_id, e_schema, e_table, b_schema, b_table)
+-- 	VALUES (null, 'property_name', null, 'meta', 'property', null, null);
+-- INSERT INTO meta.entity_extra(
+-- 	entity_id, primarykey, base_entity_id, e_schema, e_table, b_schema, b_table)
+-- 	VALUES (null, 'relation_name', null, 'meta', 'relation', null, null);
+
+-- INSERT INTO meta.entity_extra(
+-- 	entity_id, primarykey, base_entity_id, e_schema, e_table, b_schema, b_table)
+-- 	VALUES (null, 'projection_name', null, 'meta', 'projection_entity', null, null);
+
+-- INSERT INTO meta.entity_extra(
+-- 	entity_id, primarykey, base_entity_id, e_schema, e_table, b_schema, b_table)
+-- 	VALUES (null, 'projection_property_name', null, 'meta', 'projection_property', null, null);
+-- INSERT INTO meta.entity_extra(
+-- 	entity_id, primarykey, base_entity_id, e_schema, e_table, b_schema, b_table)
+-- 	VALUES (null, 'projection_relation_name', null, 'meta', 'projection_relation', null, null);
+
+
+-- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'base_entity_id'	,'Используется в сущностях'	  ,"meta"	,"entity"	          ,"meta","entity"	            ,"base_entity_id");
+-- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'entity_id'	      ,'Колонки'	                  ,"meta"	,"entity"	          ,"meta","property"	          ,"entity_id");
+-- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'entity_id'	      ,'Зависимости'	              ,"meta"	,"entity"	          ,"meta","relation"	          ,"entity_id");
+-- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'entity_id'	      ,'Проекции'	                  ,"meta"	,"entity"	          ,"meta","projection_entity"	  ,"entity_id");
+-- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'projection_name'	,'Кнопки'	                    ,"meta"	,"projection_entity","meta","projection_buttons"	,"projection_name");
+-- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'projection_name'	,'Свойства'	                  ,"meta"	,"projection_entity","meta","projection_property"	,"projection_name");
+-- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'projection_name'	,'Зависимости'	              ,"meta"	,"projection_entity","meta","projection_relation"	,"projection_name");
+-- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'table_type'	    ,'Используется в сущностях 1"	,"meta"	,"entity_type"	    ,"meta","entity"	            ,"type");
+-- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'type'	          ,'Используется в колонках"	  ,"meta"	,"property_type"	  ,"meta","property"	          ,"type");
+-- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'type'	          ,'Используется в свойствах"	  ,"meta"	,"property_type"	  ,"meta","projection_property"	,"type");
+-- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'entity_id'	      ,'Встречается в ..."      	  ,"meta"	,"entity"	          ,"meta","relation"	          ,"relation_entity");
