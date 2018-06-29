@@ -1814,43 +1814,38 @@ CREATE TRIGGER function_insert_trg INSTEAD OF INSERT ON meta.functions FOR EACH 
 
 CREATE TRIGGER function_update_trg INSTEAD OF UPDATE ON meta.functions FOR EACH ROW EXECUTE PROCEDURE meta.function_update_trgf();
 
---CREATE TRIGGER grants_update_trg INSTEAD OF UPDATE ON meta.grants FOR EACH ROW EXECUTE PROCEDURE meta.grants_update_trgf();
+]INSERT INTO meta.entity_extra (entity_id, primarykey, base_entity_id, e_schema, e_table, b_schema, b_table) VALUES (27795, 'entity_id', NULL, 'meta', 'entity', NULL, NULL);
+INSERT INTO meta.entity_extra (entity_id, primarykey, base_entity_id, e_schema, e_table, b_schema, b_table) VALUES (27802, 'property_name', NULL, 'meta', 'property', NULL, NULL);
+INSERT INTO meta.entity_extra (entity_id, primarykey, base_entity_id, e_schema, e_table, b_schema, b_table) VALUES (27814, 'relation_name', NULL, 'meta', 'relation', NULL, NULL);
+INSERT INTO meta.entity_extra (entity_id, primarykey, base_entity_id, e_schema, e_table, b_schema, b_table) VALUES (27821, 'projection_name', NULL, 'meta', 'projection_entity', NULL, NULL);
+INSERT INTO meta.entity_extra (entity_id, primarykey, base_entity_id, e_schema, e_table, b_schema, b_table) VALUES (27828, 'projection_property_name', NULL, 'meta', 'projection_property', NULL, NULL);
+INSERT INTO meta.entity_extra (entity_id, primarykey, base_entity_id, e_schema, e_table, b_schema, b_table) VALUES (27835, 'projection_relation_name', NULL, 'meta', 'projection_relation', NULL, NULL);
 
+INSERT INTO meta.projection_extra (projection_name, title, jump, additional, readonly, entity_id, hint, e_schema, e_table) VALUES ('entity_edit', NULL, NULL, NULL, NULL, 27795, NULL, 'meta', 'entity');
+INSERT INTO meta.projection_extra (projection_name, title, jump, additional, readonly, entity_id, hint, e_schema, e_table) VALUES ('entity', 'Сущности', 'entity_edit', NULL, false, 27795, NULL, 'meta', 'entity');
 
+INSERT INTO meta.projection_property_extra (column_name, title, type, readonly, visible, projection_name, ref_projection, _order, concat_prev, projection_property_name, hint, pattern) VALUES ('name', 'Наименование', 'caption', false, false, 'route_variant', NULL, 15, false, 'route_variant.name', NULL, NULL);
+INSERT INTO meta.projection_property_extra (column_name, title, type, readonly, visible, projection_name, ref_projection, _order, concat_prev, projection_property_name, hint, pattern) VALUES ('rv_comment', 'Наименование', 'caption', false, true, 'route_variant', NULL, 1, false, 'route_variant.rv_comment', NULL, NULL);
+INSERT INTO meta.projection_property_extra (column_name, title, type, readonly, visible, projection_name, ref_projection, _order, concat_prev, projection_property_name, hint, pattern) VALUES ('carrier_key', 'carrier_key', 'ref', false, false, 'route_variant', 'carrier', 70, false, 'route_variant.carrier_key', NULL, NULL);
+INSERT INTO meta.projection_property_extra (column_name, title, type, readonly, visible, projection_name, ref_projection, _order, concat_prev, projection_property_name, hint, pattern) VALUES ('out_num', 'Номер выхода', 'caption', false, true, 'order_list', NULL, 70, false, 'order_list.out_num', NULL, NULL);
+INSERT INTO meta.projection_property_extra (column_name, title, type, readonly, visible, projection_name, ref_projection, _order, concat_prev, projection_property_name, hint, pattern) VALUES ('start_time', 'Время выхода на маршрут', 'time', false, true, 'tab', NULL, 20, false, 'tab.start_time', NULL, NULL);
+INSERT INTO meta.projection_property_extra (column_name, title, type, readonly, visible, projection_name, ref_projection, _order, concat_prev, projection_property_name, hint, pattern) VALUES ('schema_name', 'Схема', 'caption', false, true, 'entity', NULL, 20, false, 'entity.schema_name', NULL, NULL);
+INSERT INTO meta.projection_property_extra (column_name, title, type, readonly, visible, projection_name, ref_projection, _order, concat_prev, projection_property_name, hint, pattern) VALUES ('table_name', 'Таблица', 'caption', false, true, 'entity', NULL, 30, false, 'entity.table_name', NULL, NULL);
+INSERT INTO meta.projection_property_extra (column_name, title, type, readonly, visible, projection_name, ref_projection, _order, concat_prev, projection_property_name, hint, pattern) VALUES ('view_definition', 'Описание (только для представления)', 'string', false, false, 'entity', NULL, 70, false, 'entity.view_definition', NULL, NULL);
+INSERT INTO meta.projection_property_extra (column_name, title, type, readonly, visible, projection_name, ref_projection, _order, concat_prev, projection_property_name, hint, pattern) VALUES ('note', 'Наименование', 'caption', false, true, 'entity_type', NULL, 20, false, 'entity_type.note', NULL, NULL);
+INSERT INTO meta.projection_property_extra (column_name, title, type, readonly, visible, projection_name, ref_projection, _order, concat_prev, projection_property_name, hint, pattern) VALUES ('constraint_name', 'Имя ограничения', 'string', true, true, 'property', NULL, 120, false, 'property.constraint_name', NULL, NULL);
+INSERT INTO meta.projection_property_extra (column_name, title, type, readonly, visible, projection_name, ref_projection, _order, concat_prev, projection_property_name, hint, pattern) VALUES ('projection_name', 'Проекция', 'caption', false, true, 'projection_entity', NULL, 10, false, 'projection_entity.projection_name', NULL, NULL);
 
-
-
--- INSERT INTO meta.entity_extra(
--- 	entity_id, primarykey, base_entity_id, e_schema, e_table, b_schema, b_table)
--- 	VALUES (null, 'entity_id', null, 'meta', 'entity', null, null);
-
--- INSERT INTO meta.entity_extra(
--- 	entity_id, primarykey, base_entity_id, e_schema, e_table, b_schema, b_table)
--- 	VALUES (null, 'property_name', null, 'meta', 'property', null, null);
--- INSERT INTO meta.entity_extra(
--- 	entity_id, primarykey, base_entity_id, e_schema, e_table, b_schema, b_table)
--- 	VALUES (null, 'relation_name', null, 'meta', 'relation', null, null);
-
--- INSERT INTO meta.entity_extra(
--- 	entity_id, primarykey, base_entity_id, e_schema, e_table, b_schema, b_table)
--- 	VALUES (null, 'projection_name', null, 'meta', 'projection_entity', null, null);
-
--- INSERT INTO meta.entity_extra(
--- 	entity_id, primarykey, base_entity_id, e_schema, e_table, b_schema, b_table)
--- 	VALUES (null, 'projection_property_name', null, 'meta', 'projection_property', null, null);
--- INSERT INTO meta.entity_extra(
--- 	entity_id, primarykey, base_entity_id, e_schema, e_table, b_schema, b_table)
--- 	VALUES (null, 'projection_relation_name', null, 'meta', 'projection_relation', null, null);
-
-
--- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'base_entity_id'	,'Используется в сущностях'	  ,"meta"	,"entity"	          ,"meta","entity"	            ,"base_entity_id");
--- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'entity_id'	      ,'Колонки'	                  ,"meta"	,"entity"	          ,"meta","property"	          ,"entity_id");
--- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'entity_id'	      ,'Зависимости'	              ,"meta"	,"entity"	          ,"meta","relation"	          ,"entity_id");
--- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'entity_id'	      ,'Проекции'	                  ,"meta"	,"entity"	          ,"meta","projection_entity"	  ,"entity_id");
--- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'projection_name'	,'Кнопки'	                    ,"meta"	,"projection_entity","meta","projection_buttons"	,"projection_name");
--- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'projection_name'	,'Свойства'	                  ,"meta"	,"projection_entity","meta","projection_property"	,"projection_name");
--- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'projection_name'	,'Зависимости'	              ,"meta"	,"projection_entity","meta","projection_relation"	,"projection_name");
--- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'table_type'	    ,'Используется в сущностях 1"	,"meta"	,"entity_type"	    ,"meta","entity"	            ,"type");
--- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'type'	          ,'Используется в колонках"	  ,"meta"	,"property_type"	  ,"meta","property"	          ,"type");
--- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'type'	          ,'Используется в свойствах"	  ,"meta"	,"property_type"	  ,"meta","projection_property"	,"type");
--- INSERT INTO meta.relation_extra VALUES('null', NULL, NULL,	'entity_id'	      ,'Встречается в ..."      	  ,"meta"	,"entity"	          ,"meta","relation"	          ,"relation_entity");
+INSERT INTO meta.relation_extra (relation_name, entity_id, relation_entity, key, title, e_schema, e_table, r_schema, r_table, ref_key) VALUES ('27795_27802_entity_id', 27795, 27802, 'entity_id', 'Колонки', 'meta', 'entity', 'meta', 'property', 'entity_id');
+INSERT INTO meta.relation_extra (relation_name, entity_id, relation_entity, key, title, e_schema, e_table, r_schema, r_table, ref_key) VALUES ('27795_27814_entity_id', 27795, 27814, 'entity_id', 'Зависимости', 'meta', 'entity', 'meta', 'relation', 'entity_id');
+INSERT INTO meta.relation_extra (relation_name, entity_id, relation_entity, key, title, e_schema, e_table, r_schema, r_table, ref_key) VALUES ('27795_27821_entity_id', 27795, 27821, 'entity_id', 'Проекции', 'meta', 'entity', 'meta', 'projection_entity', 'entity_id');
+INSERT INTO meta.relation_extra (relation_name, entity_id, relation_entity, key, title, e_schema, e_table, r_schema, r_table, ref_key) VALUES ('27821_27758_projection_name', 27821, 27758, 'projection_name', 'Кнопки', 'meta', 'projection_entity', 'meta', 'projection_buttons', 'projection_name');
+INSERT INTO meta.relation_extra (relation_name, entity_id, relation_entity, key, title, e_schema, e_table, r_schema, r_table, ref_key) VALUES ('27821_27828_projection_name', 27821, 27828, 'projection_name', 'Свойства', 'meta', 'projection_entity', 'meta', 'projection_property', 'projection_name');
+INSERT INTO meta.relation_extra (relation_name, entity_id, relation_entity, key, title, e_schema, e_table, r_schema, r_table, ref_key) VALUES ('27821_27835_projection_name', 27821, 27835, 'projection_name', 'Зависимости', 'meta', 'projection_entity', 'meta', 'projection_relation', 'projection_name');
+INSERT INTO meta.relation_extra (relation_name, entity_id, relation_entity, key, title, e_schema, e_table, r_schema, r_table, ref_key) VALUES ('27795_27795_base_entity_id', 27795, 27795, 'entity_id', 'Используется в сущностях', 'meta', 'entity', 'meta', 'entity', 'base_entity_id');
+INSERT INTO meta.relation_extra (relation_name, entity_id, relation_entity, key, title, e_schema, e_table, r_schema, r_table, ref_key) VALUES ('27868_27802_type', 27868, 27802, 'type', 'Используется в колонках', 'meta', 'property_type', 'meta', 'property', 'type');
+INSERT INTO meta.relation_extra (relation_name, entity_id, relation_entity, key, title, e_schema, e_table, r_schema, r_table, ref_key) VALUES ('27868_27828_type', 27868, 27828, 'type', 'Используется в свойствах', 'meta', 'property_type', 'meta', 'projection_property', 'type');
+INSERT INTO meta.relation_extra (relation_name, entity_id, relation_entity, key, title, e_schema, e_table, r_schema, r_table, ref_key) VALUES ('27795_27814_relation_entity', 27795, 27814, 'entity_id', 'Встречается в ...', 'meta', 'entity', 'meta', 'relation', 'relation_entity');
+INSERT INTO meta.relation_extra (relation_name, entity_id, relation_entity, key, title, e_schema, e_table, r_schema, r_table, ref_key) VALUES ('27860_27795_table_type', 27860, 27795, 'type', 'Используется в сущностях 1', 'meta', 'entity_type', 'meta', 'entity', 'table_type');
+INSERT INTO meta.relation_extra (relation_name, entity_id, relation_entity, key, title, e_schema, e_table, r_schema, r_table, ref_key) VALUES ('27821_27821_jump', 27821, 27821, 'projection_name', 'Переход из ...', 'meta', 'projection_entity', 'meta', 'projection_entity', 'jump');
+INSERT INTO meta.relation_extra (relation_name, entity_id, relation_entity, key, title, e_schema, e_table, r_schema, r_table, ref_key) VALUES ('27795_27828_ref_entity', 27795, 27828, 'entity_id', 'Используется в свойствах', 'meta', 'entity', 'meta', 'projection_property', 'ref_entity');
